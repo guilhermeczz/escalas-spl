@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0b315e" />
+    <title>Painel ADM — SuperEscalas</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body class="admin-body admin-dashboard">
+    <div id="loading" class="loading-overlay hidden"><div class="spinner"></div><p>Carregando painel...</p></div>
+
+    <aside class="dashboard-sidebar no-print">
+      <a class="sidebar-brand" href="/admin.html" aria-label="Gestão de Escalas">
+        <span class="brand-monogram" aria-hidden="true">SE</span>
+        <span><strong>Gestão de Escalas</strong><small>Controle de acesso</small></span>
+      </a>
+      <nav class="sidebar-nav" aria-label="Navegação principal">
+        <button class="admin-tab active" data-tab="dashboard"><svg viewBox="0 0 24 24"><path d="M4 13h6V4H4v9Zm0 7h6v-4H4v4Zm10 0h6v-9h-6v9Zm0-16v4h6V4h-6Z"/></svg> Visão geral</button>
+        <button class="admin-tab" data-tab="escalas"><svg viewBox="0 0 24 24"><path d="M7 2v3M17 2v3M3.5 9h17M5 4h14a2 2 0 0 1 2 2v14H3V6a2 2 0 0 1 2-2Z"/></svg> Escalas</button>
+        <button class="admin-tab" data-tab="team"><svg viewBox="0 0 24 24"><path d="M16 20v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 10a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM22 20v-2a4 4 0 0 0-3-3.87M16 2.13a4 4 0 0 1 0 7.75"/></svg> Equipe</button>
+        <button class="admin-tab" data-tab="mural"><svg viewBox="0 0 24 24"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8Z"/></svg> Comunicados</button>
+        <div class="sidebar-separator"></div>
+        <span class="sidebar-section-label">Administração</span>
+        <a class="sidebar-link" href="/" target="_blank"><svg viewBox="0 0 24 24"><path d="M14 3h7v7M10 14 21 3M21 14v6H4V3h6"/></svg> Abrir visão pública</a>
+      </nav>
+      <div class="sidebar-foot">Controle de Acesso<br /><small>by guilhermeczz</small></div>
+    </aside>
+
+    <div class="dashboard-shell">
+      <header class="dashboard-topbar no-print">
+        <button id="menuBtn" class="mobile-menu" aria-label="Abrir menu">☰</button>
+        <div class="topbar-spacer"></div>
+        <div class="admin-welcome"><span>Bem-vindo,</span><strong id="adminName">Administrador</strong></div>
+        <div id="adminAvatar" class="top-avatar">ADM</div>
+        <button id="themeToggle" class="topbar-logout theme-toggle" type="button">🌙 Modo escuro</button>
+        <button id="logoutBtn" class="topbar-logout" title="Sair">Sair</button>
+      </header>
+
+      <main class="dashboard-main">
+        <div class="dashboard-titlebar">
+          <div><p class="eyebrow">Painel administrativo</p><h1>Visão geral</h1><p id="dashboardDate" class="toolbar-sub">Gestão de escalas e equipe</p></div>
+        </div>
+
+        <section id="view-dashboard" class="overview-grid admin-view">
+          <article class="overview-card overview-ura"><header><div><span class="card-marker blue"></span><h2>Atendimento URA</h2></div><small>Escala de hoje por horário</small></header><div id="overviewUra" class="overview-list"></div></article>
+          <article class="overview-card overview-plantao"><header><div><span class="card-marker red"></span><h2>Plantão</h2></div><small>Analistas por período</small></header><div id="overviewPlantao" class="overview-list"></div></article>
+          <article class="overview-card overview-almoco"><header><div><span class="card-marker amber"></span><h2>Horários de almoço</h2></div><small>Definição diária</small></header><div id="overviewAlmoco" class="overview-list"></div></article>
+          <article class="overview-card overview-mural"><header><div><span class="card-marker slate"></span><h2>Comunicados</h2></div></header><div id="overviewMural" class="overview-list"></div></article>
+        </section>
+
+        <section id="view-team" class="admin-view hidden">
+          <div class="admin-view-head">
+            <div><h2>Analistas da equipe</h2><p class="toolbar-sub">Cadastros ativos no controle de acesso</p></div>
+            <button id="newAnalystBtn" class="btn-primary">+ Adicionar analista</button>
+          </div>
+          <div id="teamList" class="admin-list"></div>
+        </section>
+
+        <section id="view-escalas" class="admin-view hidden">
+          <div class="admin-view-head">
+            <div><h2>Gerenciar Escalas</h2><p class="toolbar-sub">URA, plantão e horários flexíveis de almoço</p></div>
+            <button id="newEscalaBtn" class="btn-primary">+ Criar nova escala</button>
+          </div>
+          <div id="escalaList" class="admin-list"></div>
+        </section>
+
+        <section id="view-mural" class="admin-view hidden">
+          <div class="admin-view-head"><div><h2>Mural de Avisos e Lembretes</h2><p class="toolbar-sub">Comunicados exibidos na visão pública</p></div></div>
+          <div id="muralList" class="admin-list"></div>
+        </section>
+
+      </main>
+    </div>
+    <div id="modalRoot"></div><div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <script type="module" src="/src/admin/admin.ts"></script>
+  </body>
+</html>

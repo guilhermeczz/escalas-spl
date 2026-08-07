@@ -2799,3 +2799,315 @@ button:disabled,
     grid-column: 1 / -1;
   }
 }
+
+/* Relatórios — hierarquia e alinhamento dos blocos de dados. */
+#view-reports {
+  min-width: 0;
+}
+
+#reportsRoot {
+  display: block;
+  min-width: 0;
+}
+
+#reportResults {
+  padding: 2px 0 18px;
+}
+
+#reportResults .report-summary {
+  margin: 18px 0 26px;
+  min-height: 64px;
+  align-items: center;
+  border: 1px solid var(--border);
+}
+
+#reportResults .report-heading {
+  display: flex;
+  align-items: center;
+  min-height: 58px;
+  margin: 22px 0 0;
+  padding: 15px 18px;
+  border: 1px solid var(--border);
+  border-bottom: 0;
+  border-radius: 12px 12px 0 0;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 16px;
+  line-height: 1.35;
+}
+
+#reportResults .report-heading + .table-wrap {
+  margin: 0 0 26px;
+  border-radius: 0 0 12px 12px;
+}
+
+#reportResults .data-table {
+  table-layout: auto;
+}
+
+#reportResults .data-table th {
+  padding: 13px 18px;
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .025em;
+  text-align: left;
+  vertical-align: middle;
+}
+
+#reportResults .data-table td {
+  padding: 15px 18px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+#reportResults .data-table td[colspan] {
+  height: 88px;
+  padding: 28px 20px;
+  color: var(--muted);
+  font-size: 13px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+#reportResults .data-table th:first-child,
+#reportResults .data-table td:first-child {
+  padding-left: 20px;
+}
+
+#reportResults .data-table th:last-child,
+#reportResults .data-table td:last-child {
+  padding-right: 20px;
+}
+
+[data-theme='dark'] #reportResults .report-heading,
+[data-theme='dark'] #reportResults .report-summary {
+  background: #151e29;
+  border-color: var(--border);
+}
+
+@media (max-width: 720px) {
+  #reportResults .report-heading {
+    min-height: 54px;
+    padding: 13px 15px;
+    font-size: 14px;
+  }
+
+  #reportResults .data-table th,
+  #reportResults .data-table td {
+    min-width: 125px;
+    padding: 12px 15px;
+  }
+
+  #reportResults .data-table th:first-child,
+  #reportResults .data-table td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    min-width: 145px;
+    background: var(--surface);
+    box-shadow: 1px 0 0 var(--border);
+  }
+
+  #reportResults .data-table th:first-child {
+    z-index: 2;
+    background: var(--bg-light);
+  }
+}
+
+/* Configuração URA — composição e alinhamento próprios. */
+.ura-config-root {
+  display: grid;
+  gap: 18px;
+}
+
+.ura-owner-card,
+.ura-config-content {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.ura-owner-card {
+  padding: 18px;
+}
+
+.ura-owner-card .field {
+  max-width: 520px;
+}
+
+.ura-owner-card select {
+  width: 100%;
+}
+
+.ura-owner-card small,
+.ura-config-caption small {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.ura-config-caption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  min-height: 70px;
+  padding: 15px 18px;
+  border-bottom: 1px solid var(--border);
+}
+
+.ura-config-caption > div {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.ura-config-caption strong {
+  margin-bottom: 3px;
+  color: var(--text);
+  font-size: 15px;
+}
+
+#uraSelectedCount {
+  flex: 0 0 auto;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: var(--bg-light);
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.ura-template-rows {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 14px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.ura-template-rows .analyst-schedule-row {
+  display: grid;
+  grid-template-columns: minmax(210px, 1fr) minmax(300px, auto);
+  align-items: center;
+  gap: 20px;
+  min-height: 58px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+}
+
+.ura-template-rows .analyst-choice {
+  min-width: 0;
+  padding: 0;
+}
+
+.ura-template-rows .analyst-choice > span:last-child {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.ura-template-rows .analyst-choice strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ura-template-rows .individual-time-fields {
+  display: none;
+  align-items: end;
+  justify-content: flex-end;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.ura-template-rows .show-individual-time .individual-time-fields {
+  display: flex;
+}
+
+.ura-template-rows .individual-time-fields label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.ura-template-rows .individual-time-fields input {
+  width: 116px;
+  min-height: 38px;
+  padding: 7px 9px;
+}
+
+.ura-template-rows .time-arrow {
+  align-self: center;
+  margin-top: 15px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.ura-config-footer {
+  display: flex;
+  justify-content: flex-end;
+  min-height: 72px;
+  padding: 15px 18px;
+  border-top: 1px solid var(--border);
+}
+
+.ura-config-footer:has(.hidden) {
+  display: none;
+}
+
+.ura-config-footer .btn-primary {
+  min-width: 210px;
+}
+
+[data-theme='dark'] .ura-owner-card,
+[data-theme='dark'] .ura-config-content {
+  background: #151e29;
+  border-color: var(--border);
+}
+
+@media (max-width: 760px) {
+  .ura-config-caption {
+    align-items: flex-start;
+  }
+
+  .ura-template-rows .analyst-schedule-row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .ura-template-rows .individual-time-fields,
+  .ura-template-rows .show-individual-time .individual-time-fields {
+    justify-content: flex-start;
+    margin-left: 15px;
+  }
+
+  .ura-config-footer .btn-primary {
+    width: 100%;
+  }
+}
+
+@media (max-width: 440px) {
+  .ura-template-rows .individual-time-fields,
+  .ura-template-rows .show-individual-time .individual-time-fields {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    margin-left: 0;
+  }
+
+  .ura-template-rows .individual-time-fields input {
+    width: 100%;
+  }
+}

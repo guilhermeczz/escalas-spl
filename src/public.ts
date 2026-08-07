@@ -282,14 +282,22 @@ function openLunchEditor() {
   document.body.appendChild(overlay);
 }
 
-async function initAnalystSession() {
+async function initAnalystSession(): Promise<boolean> {
   const { data: auth } = await supabase.auth.getSession();
   if (!auth.session) {
-    if (new URLSearchParams(location.search).has('analista')) location.href = '/login.html';
-    return;
+    location.replace('/login.html');
+    return false;
   }
   const { data: profile } = await supabase.from('profiles').select('name,role,analyst_id,analysts(extension)').eq('id', auth.session.user.id).single();
-  if (!profile || profile.role === 'admin') return;
+  if (!profile) {
+    await supabase.auth.signOut();
+    location.replace('/login.html');
+    return false;
+  }
+  if (profile.role === 'admin') {
+    location.replace('/admin.html');
+    return false;
+  }
   analystLoggedIn = true;
   const analyst = Array.isArray(profile.analysts) ? profile.analysts[0] : profile.analysts;
   const name = profile.name?.trim() || auth.session.user.email?.split('@')[0] || 'Analista';
@@ -299,15 +307,17 @@ async function initAnalystSession() {
   $('#myLunchCard').classList.remove('hidden');
   $('#analystLogout').classList.remove('hidden');
   document.querySelectorAll<HTMLAnchorElement>('a[href="/login.html"]').forEach((link) => link.classList.add('hidden'));
-  if (!profile.analyst_id) { $('#myLunchStatus').textContent = 'Perfil sem vínculo'; $('#openLunchBtn').setAttribute('disabled', ''); return; }
+  if (!profile.analyst_id) { $('#myLunchStatus').textContent = 'Perfil sem vínculo'; $('#openLunchBtn').setAttribute('disabled', ''); return true; }
   await refreshMyLunch();
+  return true;
 }
 
 // ---------------------------------------------------------------- init
 startClock();
 initTheme();
-loadPublicData();
-initAnalystSession();
+initAnalystSession().then((allowed) => {
+  if (allowed) loadPublicData();
+});
 
 $('#refreshBtn').addEventListener('click', () => loadPublicData());
 $('#openLunchBtn').addEventListener('click', openLunchEditor);

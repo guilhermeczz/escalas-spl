@@ -222,6 +222,22 @@ a {
 .lunch-form-actions { display:flex; gap:10px; margin-top:20px; }
 .lunch-form-actions > * { flex:1; }
 .lunch-status { margin:16px 0; padding:12px 14px; border-radius:10px; background:#eff6ff; color:#1e40af; font-weight:700; }
+.access-choice { display:grid; gap:12px; margin-top:24px; }
+.access-option { width:100%; display:flex; align-items:center; gap:14px; padding:16px; border:1px solid var(--border); border-radius:12px; background:var(--surface); color:var(--text); text-align:left; cursor:pointer; transition:.18s ease; }
+.access-option:hover { border-color:var(--blue); background:color-mix(in srgb, var(--blue) 5%, var(--surface)); transform:translateY(-1px); box-shadow:var(--shadow); }
+.access-option-icon { width:46px; height:46px; flex:0 0 46px; display:grid; place-items:center; border-radius:11px; background:#e8f2fd; color:#145da0; font-size:12px; font-weight:900; }
+.access-admin .access-option-icon { background:#e7edf5; color:#173b60; }
+.access-option > span:last-child { display:flex; flex-direction:column; }
+.access-option strong { font-size:15px; }
+.access-option small { margin-top:2px; color:var(--muted); font-size:11px; }
+.selected-access { display:grid; grid-template-columns:auto 1fr; align-items:center; column-gap:10px; margin:20px 0 16px; padding:10px 12px; border-radius:10px; background:var(--bg-light); }
+.selected-access button { grid-row:1 / 3; border:0; background:transparent; color:var(--blue); font-size:20px; cursor:pointer; }
+.selected-access span { color:var(--muted); font-size:10px; text-transform:uppercase; letter-spacing:.06em; }
+.selected-access strong { color:var(--text); font-size:13px; }
+[data-theme='dark'] .access-option { background:#151e29; border-color:#384b5e; }
+[data-theme='dark'] .access-option:hover { background:#1b2b3a; border-color:#63adf7; }
+[data-theme='dark'] .access-option-icon { background:#203a52; color:#b9ddff; }
+[data-theme='dark'] .selected-access { background:#101923; }
 .analyst-identity { display:flex; flex-direction:column; min-width:120px; padding-left:14px; border-left:1px solid #dbe4ee; line-height:1.15; }
 .analyst-identity span { color:#2563eb; font-size:10px; font-weight:900; letter-spacing:.12em; }
 .analyst-identity strong { font-size:13px; color:var(--text, #172033); }

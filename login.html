@@ -14,10 +14,22 @@
         <div class="auth-logo">
           <div class="brand-badge">SL</div>
           <h1>Escalas · Superlógica</h1>
-          <p>Acesso de administradores e analistas</p>
+          <p>Escolha como deseja acessar</p>
         </div>
 
-        <form id="loginForm" novalidate>
+        <div id="accessChoice" class="access-choice">
+          <button type="button" class="access-option access-admin" data-access="admin">
+            <span class="access-option-icon">ADM</span>
+            <span><strong>Acesso ADM</strong><small>Gerenciar equipe, escalas e usuários</small></span>
+          </button>
+          <button type="button" class="access-option access-analyst" data-access="user">
+            <span class="access-option-icon">AN</span>
+            <span><strong>Acesso do Analista</strong><small>Acompanhar escalas e registrar almoço</small></span>
+          </button>
+        </div>
+
+        <form id="loginForm" class="hidden" novalidate>
+          <div class="selected-access"><button id="backToChoice" type="button" aria-label="Voltar">←</button><span>Entrando como</span><strong id="selectedAccessLabel"></strong></div>
           <div class="field">
             <label for="username">Usuário</label>
             <input type="text" id="username" name="username" autocomplete="username" placeholder="Digite seu usuário" minlength="3" maxlength="40" autocapitalize="none" spellcheck="false" required />
@@ -32,13 +44,11 @@
           <div id="loginError" class="form-error hidden"></div>
           <p class="password-help">Acesso simples: seu usuário e uma senha numérica de 6 dígitos.</p>
           <button type="submit" id="loginBtn" class="btn-primary btn-block">
-            Entrar no painel
+            Entrar
           </button>
         </form>
 
-        <p class="auth-hint">
-          <a href="/">← Voltar para o mural público</a>
-        </p>
+        <p class="auth-hint">O acesso às escalas exige identificação.</p>
       </div>
     </div>
 

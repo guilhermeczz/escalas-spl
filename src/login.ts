@@ -13,6 +13,8 @@ const usernameInput = $<HTMLInputElement>('#username');
 const passInput = $<HTMLInputElement>('#password');
 const errorEl = $('#loginError');
 const loginBtn = $<HTMLButtonElement>('#loginBtn');
+const accessChoice = $('#accessChoice');
+let desiredRole: 'admin' | 'user' | null = null;
 
 initTheme();
 
@@ -37,6 +39,11 @@ async function login(username: string, password: string) {
   }
   const { data: sessionData } = await supabase.auth.getSession();
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', sessionData.session!.user.id).single();
+  if (!profile || profile.role !== desiredRole) {
+    await supabase.auth.signOut();
+    showError(desiredRole === 'admin' ? 'Este usuário não possui acesso administrativo.' : 'Este usuário não é um login de analista.');
+    return;
+  }
   window.location.href = profile?.role === 'admin' ? '/admin.html' : '/?analista=1';
 }
 
@@ -69,6 +76,24 @@ form.addEventListener('submit', async (e) => {
     loginBtn.disabled = false;
     loginBtn.textContent = 'Entrar no painel';
   }
+});
+
+document.querySelectorAll<HTMLButtonElement>('[data-access]').forEach((button) => {
+  button.addEventListener('click', () => {
+    desiredRole = button.dataset.access as 'admin' | 'user';
+    accessChoice.classList.add('hidden');
+    form.classList.remove('hidden');
+    $('#selectedAccessLabel').textContent = desiredRole === 'admin' ? 'Administrador' : 'Analista';
+    usernameInput.focus();
+  });
+});
+
+$('#backToChoice').addEventListener('click', () => {
+  desiredRole = null;
+  form.classList.add('hidden');
+  accessChoice.classList.remove('hidden');
+  errorEl.classList.add('hidden');
+  passInput.value = '';
 });
 
 // Se já estiver logado, vai direto para o painel

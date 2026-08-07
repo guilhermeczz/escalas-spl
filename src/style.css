@@ -241,6 +241,8 @@ a {
 .report-filters { display:grid; grid-template-columns:1.3fr repeat(3,1fr) auto; gap:12px; align-items:end; margin-bottom:20px; padding:16px; border:1px solid var(--border); border-radius:12px; background:var(--surface); }
 .report-summary { display:flex; align-items:baseline; gap:8px; margin:12px 0 20px; padding:14px 16px; border-radius:10px; background:var(--bg-light); }
 .report-summary strong { color:var(--blue); font-size:22px; margin-left:14px; }.report-summary strong:first-child{margin-left:0}.report-summary span{color:var(--muted);font-size:12px}.report-heading{margin:22px 0 10px;font-size:16px}
+.lunch-outside-warning { background:#fff7ed; border-color:#fdba74; color:#9a3412; }
+[data-theme='dark'] .lunch-outside-warning { background:#3b291a; border-color:#9a6737; color:#ffd0a0; }
 @media(max-width:900px){.report-filters{grid-template-columns:1fr 1fr}.report-filters .btn-primary{grid-column:1/-1}}
 .analyst-identity { display:flex; flex-direction:column; min-width:120px; padding-left:14px; border-left:1px solid #dbe4ee; line-height:1.15; }
 .analyst-identity span { color:#2563eb; font-size:10px; font-weight:900; letter-spacing:.12em; }
@@ -2418,4 +2420,353 @@ a.btn-ghost:focus-visible {
 
 [data-theme='dark'] .my-lunch-card.in-progress strong {
   color: #ffd09b;
+}
+
+/* ========================================================================== */
+/* UI/UX consistente — painel, tabelas, formulários e ações                   */
+/* ========================================================================== */
+.admin-dashboard button,
+.admin-dashboard a,
+.public-body button,
+.auth-body button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.admin-dashboard .btn-primary,
+.admin-dashboard .btn-ghost,
+.admin-dashboard .btn-secondary,
+.admin-dashboard .btn-danger,
+.admin-dashboard .btn-mini,
+.modal-actions button,
+.report-filters button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+.admin-dashboard .btn-primary,
+.admin-dashboard .btn-ghost,
+.admin-dashboard .btn-secondary,
+.admin-dashboard .btn-danger {
+  min-height: 40px;
+  padding: 9px 16px;
+}
+
+.admin-dashboard .btn-mini {
+  min-height: 34px;
+  padding: 7px 12px;
+}
+
+button:disabled,
+.btn-primary:disabled,
+.btn-ghost:disabled,
+.btn-mini:disabled {
+  cursor: not-allowed;
+  opacity: .55;
+  transform: none !important;
+  box-shadow: none;
+}
+
+.admin-view-head {
+  min-height: 72px;
+  margin-bottom: 20px;
+  padding: 16px 18px;
+  gap: 20px;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.admin-view-head > div:first-child {
+  min-width: 0;
+  flex: 1;
+}
+
+.admin-view-head h2 {
+  margin: 0 0 4px;
+  line-height: 1.25;
+}
+
+.admin-view-head .toolbar-sub {
+  margin: 0;
+  line-height: 1.45;
+}
+
+.admin-list,
+#reportResults {
+  min-width: 0;
+}
+
+.table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.data-table th {
+  height: 46px;
+  padding: 11px 14px;
+  vertical-align: middle;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+.data-table td {
+  min-height: 54px;
+  padding: 13px 14px;
+  vertical-align: middle;
+  line-height: 1.45;
+}
+
+.data-table td + td,
+.data-table th + th {
+  padding-left: 18px;
+}
+
+.cell-user,
+.mini-user {
+  gap: 10px;
+  align-items: center;
+}
+
+.td-actions,
+.escala-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.td-actions {
+  min-width: 174px;
+}
+
+.escala-row,
+.notice-row {
+  padding: 16px 18px;
+  gap: 20px;
+  align-items: center;
+  border-radius: 12px;
+}
+
+.escala-main,
+.escala-info,
+.notice-content {
+  min-width: 0;
+}
+
+.escala-info h4,
+.notice-text {
+  margin-bottom: 5px;
+  line-height: 1.35;
+}
+
+.escala-info p,
+.notice-meta {
+  line-height: 1.5;
+}
+
+.escala-analysts {
+  margin-top: 10px;
+  gap: 8px;
+}
+
+.modal-head {
+  min-height: 64px;
+  padding: 16px 20px;
+  gap: 16px;
+}
+
+.modal-body {
+  padding: 20px;
+}
+
+.modal-body .field + .field,
+.modal-body .field-row + .field,
+.modal-body .field + .field-row {
+  margin-top: 16px;
+}
+
+.field {
+  gap: 7px;
+}
+
+.field label,
+.field-heading > label {
+  line-height: 1.3;
+}
+
+.field input:not([type='checkbox']):not([type='color']),
+.field select,
+.field textarea {
+  min-height: 42px;
+  padding: 9px 12px;
+  line-height: 1.35;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  margin-top: 22px;
+  padding-top: 16px;
+}
+
+.modal-actions button {
+  min-width: 112px;
+}
+
+.analyst-schedule-list {
+  margin-top: 8px;
+  padding: 8px;
+}
+
+.analyst-schedule-row,
+.analyst-schedule-row.selected {
+  min-height: 48px;
+  padding: 10px 12px;
+}
+
+.analyst-choice {
+  line-height: 1.35;
+}
+
+.individual-time-fields {
+  gap: 10px;
+  padding: 10px 0 0;
+}
+
+.report-filters {
+  gap: 14px;
+  padding: 18px;
+}
+
+.report-filters .field {
+  min-width: 0;
+}
+
+.report-filters .btn-primary {
+  min-height: 42px;
+}
+
+.report-summary {
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  padding: 16px 18px;
+}
+
+.report-heading {
+  margin: 26px 0 12px;
+  line-height: 1.35;
+}
+
+.sidebar-nav .admin-tab,
+.sidebar-link {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  gap: 12px;
+  line-height: 1.25;
+  text-align: left;
+}
+
+.sidebar-nav .admin-tab svg,
+.sidebar-link svg {
+  flex: 0 0 18px;
+}
+
+.overview-row {
+  min-height: 48px;
+  padding: 9px 6px;
+  gap: 14px;
+  line-height: 1.35;
+}
+
+.overview-row em,
+.chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 24px;
+  padding: 4px 9px;
+  line-height: 1.15;
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .admin-view-head {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .admin-view-head > button {
+    width: 100%;
+  }
+
+  .report-filters {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .escala-row,
+  .notice-row {
+    align-items: stretch;
+  }
+
+  .escala-actions,
+  .td-actions {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 620px) {
+  .dashboard-main {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .report-filters,
+  .field-row {
+    grid-template-columns: 1fr;
+  }
+
+  .report-filters .btn-primary {
+    grid-column: auto;
+    width: 100%;
+  }
+
+  .modal-body,
+  .modal-head {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .modal-actions {
+    flex-direction: column-reverse;
+  }
+
+  .modal-actions button {
+    width: 100%;
+  }
+
+  .overview-row {
+    grid-template-columns: 1fr auto;
+  }
+
+  .overview-row span {
+    grid-column: 1 / -1;
+  }
 }

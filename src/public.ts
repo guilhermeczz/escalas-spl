@@ -29,6 +29,9 @@ let currentEscalas: EscalaWithAnalysts[] = [];
 let analystLoggedIn = false;
 let activeLunchAnalystIds = new Set<string>();
 let myActiveLunch = false;
+let myLunchCanReturn = false;
+let myPlannedLunchStart: string | undefined;
+let myPlannedLunchEnd: string | undefined;
 
 // ---------------------------------------------------------------- clock
 function tickClock() {
@@ -241,19 +244,29 @@ async function refreshMyLunch() {
   const card = $('#myLunchCard');
   const start = lunch?.schedule_start?.slice(0, 5) as string | undefined;
   const end = lunch?.schedule_end?.slice(0, 5) as string | undefined;
+  myPlannedLunchStart = start;
+  myPlannedLunchEnd = end;
   myActiveLunch = Boolean(lunch?.event_id && !lunch?.returned_at);
   const completed = Boolean(lunch?.returned_at);
   card.classList.toggle('in-progress', myActiveLunch);
   if (myActiveLunch) {
+    const returnUnlock = new Date(new Date(lunch.started_at).getTime() + 59 * 60 * 1000);
+    myLunchCanReturn = Date.now() >= returnUnlock.getTime();
     $('#myLunchStatus').textContent = 'Em andamento';
-    $('#myLunchTime').textContent = `Retorno previsto às ${new Date(lunch.expected_return_at).toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' })}`;
-    $('#openLunchBtn').textContent = 'Registrar retorno';
+    $('#myLunchTime').textContent = myLunchCanReturn
+      ? `Retorno previsto às ${new Date(lunch.expected_return_at).toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' })}`
+      : `Retorno liberado às ${returnUnlock.toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' })}`;
+    $('#openLunchBtn').textContent = myLunchCanReturn ? 'Registrar retorno' : 'Retorno bloqueado';
+    if (myLunchCanReturn) $('#openLunchBtn').removeAttribute('disabled'); else $('#openLunchBtn').setAttribute('disabled', '');
   } else if (completed) {
+    myLunchCanReturn = false;
     $('#myLunchStatus').textContent = 'Concluído';
     $('#myLunchTime').textContent = `Retorno registrado às ${new Date(lunch.returned_at).toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' })}`;
     $('#openLunchBtn').textContent = 'Almoço concluído';
     $('#openLunchBtn').setAttribute('disabled', '');
   } else {
+    myLunchCanReturn = false;
+    $('#openLunchBtn').removeAttribute('disabled');
     $('#myLunchStatus').textContent = start && end ? 'Previsto' : 'Ainda não previsto';
     $('#myLunchTime').textContent = start && end ? `${formatTime(start)} às ${formatTime(end)}` : 'Registre somente quando for sair';
     $('#openLunchBtn').textContent = 'Registrar almoço';
@@ -264,9 +277,11 @@ async function refreshMyLunch() {
 function openLunchEditor() {
   const now = new Date();
   const expectedReturn = addOneHour(currentHHMM(now));
+  const currentTime = currentHHMM(now);
+  const outsidePlannedTime = Boolean(myPlannedLunchStart && myPlannedLunchEnd && (currentTime < myPlannedLunchStart || currentTime >= myPlannedLunchEnd));
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
-  overlay.innerHTML = `<div class="modal" role="dialog" aria-modal="true"><div class="modal-head"><div><h3>${myActiveLunch ? 'Registrar retorno' : 'Iniciar almoço agora'}</h3><p class="toolbar-sub">${myActiveLunch ? 'Confirme que você já retornou ao atendimento.' : 'A saída será registrada com o horário atual.'}</p></div><button class="modal-close" type="button">✕</button></div><form id="myLunchForm" class="modal-body">${myActiveLunch ? '<div class="schedule-tip"><strong>Retornar ao atendimento</strong><span>A URA deixará de exibir você como Em pausa.</span></div>' : `<div class="schedule-tip"><strong>Retorno previsto às ${formatTime(expectedReturn)}</strong><span>O almoço tem duração padrão de 1 hora. A saída antecipada depende de haver vaga.</span></div><div class="schedule-tip"><strong>Limite simultâneo</strong><span>Somente 2 analistas podem ficar em almoço ao mesmo tempo.</span></div>`}<div class="modal-actions"><button class="btn-ghost lunch-cancel" type="button">Cancelar</button><button class="btn-primary" type="submit">${myActiveLunch ? 'Confirmar retorno' : 'Confirmar saída'}</button></div></form></div>`;
+  overlay.innerHTML = `<div class="modal" role="dialog" aria-modal="true"><div class="modal-head"><div><h3>${myActiveLunch ? 'Registrar retorno' : 'Iniciar almoço agora'}</h3><p class="toolbar-sub">${myActiveLunch ? 'Confirme que você já retornou ao atendimento.' : 'A saída será registrada com o horário atual.'}</p></div><button class="modal-close" type="button">✕</button></div><form id="myLunchForm" class="modal-body">${myActiveLunch ? '<div class="schedule-tip"><strong>Retornar ao atendimento</strong><span>A URA deixará de exibir você como Em pausa.</span></div>' : `${outsidePlannedTime ? `<div class="schedule-tip lunch-outside-warning"><strong>Você está saindo fora do horário previsto</strong><span>Previsto: ${formatTime(myPlannedLunchStart!)} às ${formatTime(myPlannedLunchEnd!)} · Saída agora: ${formatTime(currentTime)}. Confirme se deseja realmente iniciar o almoço neste horário.</span></div>` : ''}<div class="schedule-tip"><strong>Retorno previsto às ${formatTime(expectedReturn)}</strong><span>O retorno só poderá ser registrado depois de 59 minutos.</span></div><div class="schedule-tip"><strong>Limite simultâneo</strong><span>Somente 2 analistas podem ficar em almoço ao mesmo tempo.</span></div>`}<div class="modal-actions"><button class="btn-ghost lunch-cancel" type="button">Cancelar</button><button class="btn-primary" type="submit">${myActiveLunch ? 'Confirmar retorno' : outsidePlannedTime ? 'Sim, iniciar agora' : 'Confirmar saída'}</button></div></form></div>`;
   const close = () => overlay.remove();
   overlay.querySelector('.modal-close')!.addEventListener('click', close);
   overlay.querySelector('.lunch-cancel')!.addEventListener('click', close);
@@ -276,7 +291,7 @@ function openLunchEditor() {
     const button = overlay.querySelector<HTMLButtonElement>('button[type=submit]')!;
     button.disabled = true; button.textContent = 'Salvando...';
     const { error } = await supabase.rpc(myActiveLunch ? 'finish_my_lunch' : 'start_my_lunch');
-    if (error) { button.disabled = false; button.textContent = myActiveLunch ? 'Confirmar retorno' : 'Confirmar saída'; toast(error.message.includes('LUNCH_LIMIT') ? 'Já existem 2 analistas em almoço. Aguarde um deles retornar.' : error.message); return; }
+    if (error) { button.disabled = false; button.textContent = myActiveLunch ? 'Confirmar retorno' : 'Confirmar saída'; toast(error.message.includes('LUNCH_LIMIT') ? 'Já existem 2 analistas em almoço. Aguarde um deles retornar.' : error.message.includes('RETURN_TOO_EARLY') ? 'O retorno só é liberado após 59 minutos de almoço.' : error.message); return; }
     const returning = myActiveLunch; close(); toast(returning ? 'Retorno registrado.' : 'Saída para almoço registrada.'); await refreshMyLunch();
   });
   document.body.appendChild(overlay);

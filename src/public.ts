@@ -40,6 +40,7 @@ function tickClock() {
   $('#clockDate').textContent = todayBR();
   renderTimeSensitiveSections();
   if (analystLoggedIn) void refreshMyLunch();
+  if (analystLoggedIn) void refreshWorkday();
 }
 
 function startClock() {
@@ -316,12 +317,42 @@ async function initAnalystSession(): Promise<boolean> {
   $('#analystIdentity').classList.remove('hidden');
   $('#loggedAnalystName').textContent = name;
   $('#loggedAnalystExtension').textContent = analyst?.extension ? `Ramal ${analyst.extension}` : '';
-  $('#myLunchCard').classList.remove('hidden');
+  $('#workdayPanel').classList.remove('hidden');
   $('#analystLogout').classList.remove('hidden');
   document.querySelectorAll<HTMLAnchorElement>('a[href="/login.html"]').forEach((link) => link.classList.add('hidden'));
   if (!profile.analyst_id) { $('#myLunchStatus').textContent = 'Perfil sem vínculo'; $('#openLunchBtn').setAttribute('disabled', ''); return true; }
-  await refreshMyLunch();
+  await Promise.all([refreshMyLunch(), refreshWorkday()]);
   return true;
+}
+
+type WorkEventType = 'entry' | 'lunch' | 'lunch_return' | 'shift_end';
+const workEventLabels: Record<WorkEventType, string> = { entry:'Entrada', lunch:'Almoço', lunch_return:'Retorno do almoço', shift_end:'Fim do expediente' };
+
+async function refreshWorkday() {
+  const { data } = await supabase.rpc('get_my_workday');
+  const events = (data ?? []) as { event_type: WorkEventType; occurred_at: string }[];
+  const last = events.length ? events[events.length - 1] : undefined;
+  const buttons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-work-event]'));
+  buttons.forEach((button) => { button.disabled = true; button.classList.remove('completed','active'); });
+  events.forEach((event) => document.querySelector<HTMLButtonElement>(`[data-work-event="${event.event_type}"]`)?.classList.add('completed'));
+  let next: WorkEventType | null = 'entry'; let status='Aguardando entrada'; let hint='Registre a entrada quando iniciar o expediente.';
+  if(last?.event_type==='entry'){next='lunch';status='Em expediente';hint='Próxima ação: saída para almoço.';}
+  if(last?.event_type==='lunch'){
+    const unlock=new Date(new Date(last.occurred_at).getTime()+59*60000); const allowed=Date.now()>=unlock.getTime(); next=allowed?'lunch_return':null; status='Em almoço'; hint=allowed?'O retorno já pode ser registrado.':`Retorno liberado às ${unlock.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}.`;
+  }
+  if(last?.event_type==='lunch_return'){next='shift_end';status='Em expediente';hint='Próxima ação: fim do expediente.';}
+  if(last?.event_type==='shift_end'){next=null;status='Expediente encerrado';hint='Todos os registros de hoje foram concluídos.';}
+  $('#workdayStatus').textContent=status; $('#workdayHint').textContent=hint;
+  if(next){const button=document.querySelector<HTMLButtonElement>(`[data-work-event="${next}"]`);if(button){button.disabled=false;button.classList.add('active');}}
+}
+
+function confirmWorkEvent(eventType: WorkEventType) {
+  const overlay=document.createElement('div'); overlay.className='modal-overlay';
+  const special=eventType==='lunch'?'<div class="schedule-tip"><strong>Almoço de 1 hora</strong><span>O retorno será liberado somente após 59 minutos.</span></div>':'';
+  overlay.innerHTML=`<div class="modal" role="dialog" aria-modal="true"><div class="modal-head"><div><h3>Confirmar ${workEventLabels[eventType].toLowerCase()}</h3><p class="toolbar-sub">O horário atual será registrado no seu histórico.</p></div><button class="modal-close" type="button">✕</button></div><form class="modal-body work-confirm-form"><div class="work-confirm"><strong>${workEventLabels[eventType]}</strong><span>${new Date().toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})}</span></div>${special}<p>Tem certeza de que deseja confirmar esta ação?</p><div class="modal-actions"><button class="btn-ghost cancel-work" type="button">Cancelar</button><button class="btn-primary" type="submit">Sim, confirmar</button></div></form></div>`;
+  const close=()=>overlay.remove(); overlay.querySelector('.modal-close')!.addEventListener('click',close);overlay.querySelector('.cancel-work')!.addEventListener('click',close);
+  overlay.querySelector('form')!.addEventListener('submit',async(event)=>{event.preventDefault();const button=overlay.querySelector<HTMLButtonElement>('button[type=submit]')!;button.disabled=true;button.textContent='Registrando...';const {data,error}=await supabase.functions.invoke('record-work-event',{body:{eventType}});if(error||data?.error){button.disabled=false;button.textContent='Sim, confirmar';const message=data?.error??error?.message??'Erro ao registrar.';toast(message.includes('RETURN_TOO_EARLY')?'O retorno ainda não foi liberado.':message);return;}close();toast(`${workEventLabels[eventType]} registrada com sucesso.`);await Promise.all([refreshWorkday(),refreshMyLunch()]);});
+  document.body.appendChild(overlay);
 }
 
 // ---------------------------------------------------------------- init
@@ -333,6 +364,7 @@ initAnalystSession().then((allowed) => {
 
 $('#refreshBtn').addEventListener('click', () => loadPublicData());
 $('#openLunchBtn').addEventListener('click', openLunchEditor);
+document.querySelectorAll<HTMLButtonElement>('[data-work-event]').forEach((button)=>button.addEventListener('click',()=>confirmWorkEvent(button.dataset.workEvent as WorkEventType)));
 $('#analystLogout').addEventListener('click', async () => { await supabase.auth.signOut(); location.href = '/login.html'; });
 
 function openPdfSelection() {

@@ -37,6 +37,7 @@ export async function refreshTeam(root: HTMLElement) {
               <th>E-mail</th>
               <th>Função</th>
               <th>Ramal</th>
+              <th>Slack</th>
               <th>Cadastrado em</th>
               <th class="th-actions"></th>
             </tr>
@@ -55,6 +56,7 @@ export async function refreshTeam(root: HTMLElement) {
                     <td>${escapeHtml(a.email ?? '—')}</td>
                     <td>${escapeHtml(a.role ?? '—')}</td>
                     <td>${escapeHtml(a.extension ?? '—')}</td>
+                    <td>${escapeHtml(a.slack_user_id ?? '—')}</td>
                     <td>${formatDateTime(a.created_at)}</td>
                     <td class="td-actions">
                       <button class="btn-mini" data-act="edit" data-id="${a.id}">Editar</button>
@@ -118,6 +120,11 @@ function analystModal(root: HTMLElement, analyst?: Analyst) {
         <input id="aExtension" type="text" inputmode="numeric" maxlength="10" value="${escapeHtml(analyst?.extension ?? '')}" placeholder="Ex.: 1234" />
       </div>
       <div class="field">
+        <label for="aSlackId">Slack Member ID</label>
+        <input id="aSlackId" type="text" maxlength="20" value="${escapeHtml(analyst?.slack_user_id ?? '')}" placeholder="Ex.: U012AB3CD" />
+        <small>Necessário para mencionar e notificar o analista no Slack.</small>
+      </div>
+      <div class="field">
         <label>Cor do avatar</label>
         <div class="color-row" id="colorRow">
           ${COLORS.map((c) => `<button type="button" class="color-swatch${c === (analyst?.color ?? COLORS[0]) ? ' active' : ''}" data-color="${c}" style="background:${c}" aria-label="Cor ${c}"></button>`).join('')}
@@ -153,6 +160,7 @@ function analystModal(root: HTMLElement, analyst?: Analyst) {
           email: body.querySelector<HTMLInputElement>('#aEmail')!.value.trim() || null,
           role: body.querySelector<HTMLInputElement>('#aRole')!.value.trim() || null,
           extension: body.querySelector<HTMLInputElement>('#aExtension')!.value.trim() || null,
+          slack_user_id: body.querySelector<HTMLInputElement>('#aSlackId')!.value.trim().toUpperCase() || null,
           color: colorInput.value,
         };
         if (!payload.name) return;

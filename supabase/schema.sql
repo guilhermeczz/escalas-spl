@@ -33,6 +33,7 @@ create table if not exists public.analysts (
   email      text,
   role       text,
   extension  text,
+  slack_user_id text,
   color      text not null default '#13315c',
   created_at timestamptz not null default now()
 );

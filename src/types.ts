@@ -6,6 +6,7 @@ export interface Analyst {
   email: string | null;
   role: string | null;
   extension: string | null;
+  slack_user_id: string | null;
   color: string;
   created_at: string;
 }

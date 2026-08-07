@@ -9,6 +9,7 @@ import { escapeHtml, formatDateBR, formatTime } from '../utils';
 import { initTheme } from '../theme';
 import { initUsers, refreshUsers } from './users';
 import { initUraConfig } from './uraConfig';
+import { initReports } from './reports';
 
 const $ = <T extends HTMLElement>(sel: string): T => {
   const el = document.querySelector<T>(sel);
@@ -53,6 +54,7 @@ function initNav() {
     mural: $('#view-mural'),
     users: $('#view-users'),
     'ura-config': $('#view-ura-config'),
+    reports: $('#view-reports'),
   };
 
   tabs.forEach((tab) => {
@@ -151,6 +153,7 @@ async function boot() {
     initMural($('#muralList')),
     initUsers($('#userList')),
     initUraConfig($('#uraConfig')),
+    initReports($('#reportsRoot')),
   ]);
   initDashboardActions();
   initRealtimeUpdates();

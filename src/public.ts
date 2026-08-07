@@ -8,7 +8,6 @@ import {
   formatDateBR,
   formatTime,
   dateRangeIncludesToday,
-  timeRangeIncludesNow,
   initials,
   escapeHtml,
   todayBR,
@@ -28,6 +27,8 @@ let clockTimer: number | undefined;
 let realtimeDebounce: number | undefined;
 let currentEscalas: EscalaWithAnalysts[] = [];
 let analystLoggedIn = false;
+let activeLunchAnalystIds = new Set<string>();
+let myActiveLunch = false;
 
 // ---------------------------------------------------------------- clock
 function tickClock() {
@@ -68,9 +69,7 @@ function uraStatus(analystId: string, startValue: string, endValue: string): { t
   const end = toMinutes(endValue);
   if (minutes < start) return { text: 'AGENDADO', tone: 'muted' };
   if (minutes >= end) return { text: 'CONCLUÍDO', tone: 'ok' };
-  const atLunch = currentEscalas.filter((e) => e.kind === 'almoco').flatMap((e) => e.analysts).some((a) =>
-    a.id === analystId && a.schedule_start && a.schedule_end && timeRangeIncludesNow(a.schedule_start, a.schedule_end)
-  );
+  const atLunch = activeLunchAnalystIds.has(analystId);
   return atLunch ? { text: 'EM PAUSA', tone: 'warn' } : { text: 'EM ATENDIMENTO', tone: 'ok' };
 }
 
@@ -109,8 +108,7 @@ function renderPlantao(escala: EscalaWithAnalysts): string {
 }
 
 function renderAlmoco(escala: EscalaWithAnalysts): string {
-  const inProgress = (analyst: EscalaWithAnalysts['analysts'][number]) =>
-    Boolean(analyst.schedule_start && analyst.schedule_end && timeRangeIncludesNow(analyst.schedule_start, analyst.schedule_end));
+  const inProgress = (analyst: EscalaWithAnalysts['analysts'][number]) => activeLunchAnalystIds.has(analyst.id);
   return escala.analysts
     .map((a) =>
       analystCard({
@@ -133,9 +131,7 @@ function renderTimeSensitiveSections() {
   const almoco = currentEscalas.filter((e) => e.kind === 'almoco');
   $('#uraGrid').innerHTML = ura.map(renderUra).join('');
   $('#almocoGrid').innerHTML = renderAlmocoSchedule(almoco);
-  const lunchCount = almoco.flatMap((e) => e.analysts).filter((a) =>
-    a.schedule_start && a.schedule_end && timeRangeIncludesNow(a.schedule_start, a.schedule_end)
-  ).length;
+  const lunchCount = activeLunchAnalystIds.size;
   $('#lunchCounter').textContent = `Almoço · ${lunchCount} ${lunchCount === 1 ? 'analista' : 'analistas'} em andamento`;
 }
 
@@ -237,47 +233,51 @@ function addOneHour(time: string) {
 }
 
 async function refreshMyLunch() {
-  const { data } = await supabase.rpc('get_my_lunch');
+  const [{ data }, { data: activeIds }] = await Promise.all([
+    supabase.rpc('get_my_lunch'), supabase.rpc('active_lunch_analyst_ids')
+  ]);
+  activeLunchAnalystIds = new Set((activeIds ?? []).map((row: { analyst_id: string }) => row.analyst_id));
   const lunch = Array.isArray(data) ? data[0] : data;
   const card = $('#myLunchCard');
   const start = lunch?.schedule_start?.slice(0, 5) as string | undefined;
   const end = lunch?.schedule_end?.slice(0, 5) as string | undefined;
-  const now = currentHHMM();
-  const inProgress = Boolean(start && end && now >= start && now < end);
-  card.classList.toggle('in-progress', inProgress);
-  $('#myLunchStatus').textContent = inProgress ? 'Em andamento' : start && end ? 'Registrado' : 'Não registrado';
-  $('#myLunchTime').textContent = start && end ? `${formatTime(start)} às ${formatTime(end)}` : 'Informe apenas quando for sair';
-  $('#openLunchBtn').textContent = inProgress ? 'Ajustar horário' : 'Registrar almoço';
+  myActiveLunch = Boolean(lunch?.event_id && !lunch?.returned_at);
+  const completed = Boolean(lunch?.returned_at);
+  card.classList.toggle('in-progress', myActiveLunch);
+  if (myActiveLunch) {
+    $('#myLunchStatus').textContent = 'Em andamento';
+    $('#myLunchTime').textContent = `Retorno previsto às ${new Date(lunch.expected_return_at).toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' })}`;
+    $('#openLunchBtn').textContent = 'Registrar retorno';
+  } else if (completed) {
+    $('#myLunchStatus').textContent = 'Concluído';
+    $('#myLunchTime').textContent = `Retorno registrado às ${new Date(lunch.returned_at).toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' })}`;
+    $('#openLunchBtn').textContent = 'Almoço concluído';
+    $('#openLunchBtn').setAttribute('disabled', '');
+  } else {
+    $('#myLunchStatus').textContent = start && end ? 'Previsto' : 'Ainda não previsto';
+    $('#myLunchTime').textContent = start && end ? `${formatTime(start)} às ${formatTime(end)}` : 'Registre somente quando for sair';
+    $('#openLunchBtn').textContent = 'Registrar almoço';
+  }
+  renderTimeSensitiveSections();
 }
 
 function openLunchEditor() {
   const now = new Date();
-  const startNow = currentHHMM(now);
-  const expectedReturn = addOneHour(startNow);
+  const expectedReturn = addOneHour(currentHHMM(now));
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
-  overlay.innerHTML = `<div class="modal" role="dialog" aria-modal="true"><div class="modal-head"><div><h3>Registrar saída para almoço</h3><p class="toolbar-sub">Seu retorno é calculado automaticamente para 1 hora depois.</p></div><button class="modal-close" type="button">✕</button></div><form id="myLunchForm" class="modal-body"><div class="field-row"><div class="field"><label for="myStart">Horário de saída</label><input id="myStart" type="time" value="${startNow}" required></div><div class="field"><label for="myEnd">Retorno previsto (+1 hora)</label><input id="myEnd" type="time" value="${expectedReturn}" readonly required></div></div><div class="schedule-tip"><strong>Retorno às <span id="expectedReturnText">${formatTime(expectedReturn)}</span></strong><span>O almoço tem duração padrão de 1 hora para todos.</span></div><div class="schedule-tip"><strong>Limite simultâneo</strong><span>Somente 2 analistas podem ficar em almoço ao mesmo tempo.</span></div><div class="modal-actions"><button class="btn-ghost lunch-cancel" type="button">Cancelar</button><button class="btn-primary" type="submit">Confirmar saída</button></div></form></div>`;
+  overlay.innerHTML = `<div class="modal" role="dialog" aria-modal="true"><div class="modal-head"><div><h3>${myActiveLunch ? 'Registrar retorno' : 'Iniciar almoço agora'}</h3><p class="toolbar-sub">${myActiveLunch ? 'Confirme que você já retornou ao atendimento.' : 'A saída será registrada com o horário atual.'}</p></div><button class="modal-close" type="button">✕</button></div><form id="myLunchForm" class="modal-body">${myActiveLunch ? '<div class="schedule-tip"><strong>Retornar ao atendimento</strong><span>A URA deixará de exibir você como Em pausa.</span></div>' : `<div class="schedule-tip"><strong>Retorno previsto às ${formatTime(expectedReturn)}</strong><span>O almoço tem duração padrão de 1 hora. A saída antecipada depende de haver vaga.</span></div><div class="schedule-tip"><strong>Limite simultâneo</strong><span>Somente 2 analistas podem ficar em almoço ao mesmo tempo.</span></div>`}<div class="modal-actions"><button class="btn-ghost lunch-cancel" type="button">Cancelar</button><button class="btn-primary" type="submit">${myActiveLunch ? 'Confirmar retorno' : 'Confirmar saída'}</button></div></form></div>`;
   const close = () => overlay.remove();
   overlay.querySelector('.modal-close')!.addEventListener('click', close);
   overlay.querySelector('.lunch-cancel')!.addEventListener('click', close);
   overlay.addEventListener('click', (event) => { if (event.target === overlay) close(); });
-  const startInput = overlay.querySelector<HTMLInputElement>('#myStart')!;
-  const endInput = overlay.querySelector<HTMLInputElement>('#myEnd')!;
-  startInput.addEventListener('input', () => {
-    if (!startInput.value) return;
-    endInput.value = addOneHour(startInput.value);
-    overlay.querySelector<HTMLElement>('#expectedReturnText')!.textContent = formatTime(endInput.value);
-  });
   overlay.querySelector<HTMLFormElement>('#myLunchForm')!.addEventListener('submit', async (event) => {
     event.preventDefault();
-    const start = overlay.querySelector<HTMLInputElement>('#myStart')!.value;
-    const finish = overlay.querySelector<HTMLInputElement>('#myEnd')!.value;
-    if (!start || !finish) { toast('Informe o horário de saída.'); return; }
     const button = overlay.querySelector<HTMLButtonElement>('button[type=submit]')!;
     button.disabled = true; button.textContent = 'Salvando...';
-    const { error } = await supabase.rpc('set_my_lunch', { p_start: start, p_end: finish });
-    if (error) { button.disabled = false; button.textContent = 'Confirmar saída'; toast(error.message.includes('LUNCH_LIMIT') ? 'Já existem 2 analistas em almoço nesse período.' : error.message); return; }
-    close(); toast('Saída para almoço registrada.'); await refreshMyLunch(); await loadPublicData(false);
+    const { error } = await supabase.rpc(myActiveLunch ? 'finish_my_lunch' : 'start_my_lunch');
+    if (error) { button.disabled = false; button.textContent = myActiveLunch ? 'Confirmar retorno' : 'Confirmar saída'; toast(error.message.includes('LUNCH_LIMIT') ? 'Já existem 2 analistas em almoço. Aguarde um deles retornar.' : error.message); return; }
+    const returning = myActiveLunch; close(); toast(returning ? 'Retorno registrado.' : 'Saída para almoço registrada.'); await refreshMyLunch();
   });
   document.body.appendChild(overlay);
 }

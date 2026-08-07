@@ -2348,3 +2348,54 @@ a.btn-ghost:focus-visible {
   background: #1a2a39;
   border-color: #36536d;
 }
+
+/* Contraste dos dados operacionais nos dois temas. */
+.site-header .analyst-identity strong {
+  color: #ffffff;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, .18);
+}
+
+.site-header .analyst-identity span {
+  color: #9fd1ff;
+}
+
+.site-header .analyst-identity small {
+  color: #d7e8f7;
+}
+
+[data-theme='dark'] .card-time {
+  background: #202d3a;
+  border: 1px solid #3b4d5f;
+  color: #d8e6f3;
+}
+
+[data-theme='dark'] .card-time strong {
+  color: #ffffff;
+}
+
+[data-theme='dark'] .card-time small {
+  color: #b9cad9;
+}
+
+[data-theme='dark'] .my-lunch-card {
+  background: #182635;
+  border-color: #3c5870;
+}
+
+[data-theme='dark'] .my-lunch-card span,
+[data-theme='dark'] .my-lunch-card small {
+  color: #b6c8d9;
+}
+
+[data-theme='dark'] .my-lunch-card strong {
+  color: #f3f8fc;
+}
+
+[data-theme='dark'] .my-lunch-card.in-progress {
+  background: #39291c;
+  border-color: #8b6037;
+}
+
+[data-theme='dark'] .my-lunch-card.in-progress strong {
+  color: #ffd09b;
+}

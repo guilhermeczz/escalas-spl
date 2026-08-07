@@ -79,18 +79,15 @@ function uraStatus(analystId: string, startValue: string, endValue: string): { t
 function renderUra(escala: EscalaWithAnalysts): string {
   const start = formatTime(escala.start_value ?? '');
   const end = formatTime(escala.end_value ?? '');
-  return escala.analysts
-    .map((a) => {
-      const status = uraStatus(a.id, escala.start_value ?? '00:00', escala.end_value ?? '00:00');
-      return analystCard({
-        analystName: a.name,
-        analystColor: a.color,
-        role: a.role,
-        top: `Logado das <strong>${start}</strong> às <strong>${end}</strong>${a.extension ? `<br><small>Ramal ${escapeHtml(a.extension)}</small>` : ''}`,
-        chip: status,
-      });
-    })
-    .join('');
+  const statuses = escala.analysts.map((a) => uraStatus(a.id, escala.start_value ?? '00:00', escala.end_value ?? '00:00'));
+  const status = statuses.some((item) => item.text === 'EM PAUSA')
+    ? { text: 'EM PAUSA', tone: 'warn' as const }
+    : statuses[0] ?? { text: 'AGENDADO', tone: 'muted' as const };
+  return `<article class="scale-card ura-group-card print-avoid-break">
+    <div class="card-top"><div class="ura-avatar-stack">${escala.analysts.slice(0, 4).map((a) => `<span class="avatar" title="${escapeHtml(a.name)}" style="background:${a.color}">${initials(a.name)}</span>`).join('')}${escala.analysts.length > 4 ? `<span class="avatar ura-more">+${escala.analysts.length - 4}</span>` : ''}</div><span class="chip chip-${status.tone}">${status.text}</span></div>
+    <div class="ura-group-names">${escala.analysts.map((a) => `<div><strong>${escapeHtml(a.name)}</strong>${a.extension ? `<small>Ramal ${escapeHtml(a.extension)}</small>` : ''}</div>`).join('')}</div>
+    <div class="card-time">URA das <strong>${start}</strong> às <strong>${end}</strong><small>${escala.analysts.length} analista(s) neste horário</small></div>
+  </article>`;
 }
 
 function renderPlantao(escala: EscalaWithAnalysts): string {

@@ -36,6 +36,7 @@ export async function refreshTeam(root: HTMLElement) {
               <th>Analista</th>
               <th>E-mail</th>
               <th>Função</th>
+              <th>Ramal</th>
               <th>Cadastrado em</th>
               <th class="th-actions"></th>
             </tr>
@@ -53,6 +54,7 @@ export async function refreshTeam(root: HTMLElement) {
                     </td>
                     <td>${escapeHtml(a.email ?? '—')}</td>
                     <td>${escapeHtml(a.role ?? '—')}</td>
+                    <td>${escapeHtml(a.extension ?? '—')}</td>
                     <td>${formatDateTime(a.created_at)}</td>
                     <td class="td-actions">
                       <button class="btn-mini" data-act="edit" data-id="${a.id}">Editar</button>
@@ -112,6 +114,10 @@ function analystModal(root: HTMLElement, analyst?: Analyst) {
         <input id="aRole" type="text" value="${escapeHtml(analyst?.role ?? '')}" placeholder="Ex.: Analista de URA" />
       </div>
       <div class="field">
+        <label for="aExtension">Ramal</label>
+        <input id="aExtension" type="text" inputmode="numeric" maxlength="10" value="${escapeHtml(analyst?.extension ?? '')}" placeholder="Ex.: 1234" />
+      </div>
+      <div class="field">
         <label>Cor do avatar</label>
         <div class="color-row" id="colorRow">
           ${COLORS.map((c) => `<button type="button" class="color-swatch${c === (analyst?.color ?? COLORS[0]) ? ' active' : ''}" data-color="${c}" style="background:${c}" aria-label="Cor ${c}"></button>`).join('')}
@@ -146,6 +152,7 @@ function analystModal(root: HTMLElement, analyst?: Analyst) {
           name: body.querySelector<HTMLInputElement>('#aName')!.value.trim(),
           email: body.querySelector<HTMLInputElement>('#aEmail')!.value.trim() || null,
           role: body.querySelector<HTMLInputElement>('#aRole')!.value.trim() || null,
+          extension: body.querySelector<HTMLInputElement>('#aExtension')!.value.trim() || null,
           color: colorInput.value,
         };
         if (!payload.name) return;

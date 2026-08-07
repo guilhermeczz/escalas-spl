@@ -33,6 +33,7 @@ function tickClock() {
   const now = new Date();
   $('#clockTime').textContent = `${now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
   $('#clockDate').textContent = todayBR();
+  renderTimeSensitiveSections();
 }
 
 function startClock() {
@@ -54,20 +55,37 @@ function analystCard(opts: { analystName: string; analystColor: string; role?: s
   `;
 }
 
+function uraStatus(analystId: string, startValue: string, endValue: string): { text: string; tone: 'ok' | 'warn' | 'muted' } {
+  const now = new Date();
+  const minutes = now.getHours() * 60 + now.getMinutes();
+  const toMinutes = (value: string) => {
+    const [hours, mins] = value.slice(0, 5).split(':').map(Number);
+    return hours * 60 + mins;
+  };
+  const start = toMinutes(startValue);
+  const end = toMinutes(endValue);
+  if (minutes < start) return { text: 'AGENDADO', tone: 'muted' };
+  if (minutes >= end) return { text: 'CONCLUÍDO', tone: 'ok' };
+  const atLunch = currentEscalas.filter((e) => e.kind === 'almoco').flatMap((e) => e.analysts).some((a) =>
+    a.id === analystId && a.schedule_start && a.schedule_end && timeRangeIncludesNow(a.schedule_start, a.schedule_end)
+  );
+  return atLunch ? { text: 'EM PAUSA', tone: 'warn' } : { text: 'EM ATENDIMENTO', tone: 'ok' };
+}
+
 function renderUra(escala: EscalaWithAnalysts): string {
   const start = formatTime(escala.start_value ?? '');
   const end = formatTime(escala.end_value ?? '');
-  const ativoAgora = timeRangeIncludesNow(escala.start_value ?? '', escala.end_value ?? '');
   return escala.analysts
-    .map((a) =>
-      analystCard({
+    .map((a) => {
+      const status = uraStatus(a.id, escala.start_value ?? '00:00', escala.end_value ?? '00:00');
+      return analystCard({
         analystName: a.name,
         analystColor: a.color,
         role: a.role,
-        top: `Logado das <strong>${start}</strong> às <strong>${end}</strong>`,
-        chip: ativoAgora ? { text: 'EM ATENDIMENTO', tone: 'ok' } : { text: 'FORA DO HORÁRIO', tone: 'muted' },
-      })
-    )
+        top: `Logado das <strong>${start}</strong> às <strong>${end}</strong>${a.extension ? `<br><small>Ramal ${escapeHtml(a.extension)}</small>` : ''}`,
+        chip: status,
+      });
+    })
     .join('');
 }
 
@@ -89,6 +107,8 @@ function renderPlantao(escala: EscalaWithAnalysts): string {
 }
 
 function renderAlmoco(escala: EscalaWithAnalysts): string {
+  const inProgress = (analyst: EscalaWithAnalysts['analysts'][number]) =>
+    Boolean(analyst.schedule_start && analyst.schedule_end && timeRangeIncludesNow(analyst.schedule_start, analyst.schedule_end));
   return escala.analysts
     .map((a) =>
       analystCard({
@@ -98,10 +118,23 @@ function renderAlmoco(escala: EscalaWithAnalysts): string {
         top: a.schedule_start && a.schedule_end
           ? `Almoço das <strong>${formatTime(a.schedule_start)}</strong> às <strong>${formatTime(a.schedule_end)}</strong>`
           : 'Horário ainda não definido',
-        chip: a.schedule_start ? { text: 'DEFINIDO', tone: 'ok' } : { text: 'PENDENTE', tone: 'warn' },
+        chip: inProgress(a) ? { text: 'EM ALMOÇO', tone: 'warn' } : a.schedule_start ? { text: 'DEFINIDO', tone: 'ok' } : { text: 'PENDENTE', tone: 'muted' },
       })
     )
     .join('');
+}
+
+function renderTimeSensitiveSections() {
+  if (!currentEscalas.length) return;
+  const localDate = new Date().toLocaleDateString('sv-SE');
+  const ura = currentEscalas.filter((e) => e.kind === 'horario' && (!e.schedule_date || e.schedule_date === localDate));
+  const almoco = currentEscalas.filter((e) => e.kind === 'almoco');
+  $('#uraGrid').innerHTML = ura.map(renderUra).join('');
+  $('#almocoGrid').innerHTML = renderAlmocoSchedule(almoco);
+  const lunchCount = almoco.flatMap((e) => e.analysts).filter((a) =>
+    a.schedule_start && a.schedule_end && timeRangeIncludesNow(a.schedule_start, a.schedule_end)
+  ).length;
+  $('#lunchCounter').textContent = `Almoço · ${lunchCount} ${lunchCount === 1 ? 'analista' : 'analistas'} em andamento`;
 }
 
 function renderAlmocoSchedule(escalas: EscalaWithAnalysts[]): string {
@@ -160,13 +193,15 @@ async function loadPublicData(showLoading = true) {
     currentEscalas = escalas;
     renderMural(notices);
 
-    const ura = escalas.filter((e) => e.kind === 'horario');
+    const localDate = new Date().toLocaleDateString('sv-SE');
+    const ura = escalas.filter((e) => e.kind === 'horario' && (!e.schedule_date || e.schedule_date === localDate));
     const plantao = escalas.filter((e) => e.kind === 'plantao');
     const almoco = escalas.filter((e) => e.kind === 'almoco');
 
     $('#uraGrid').innerHTML = ura.map(renderUra).join('');
     $('#plantaoGrid').innerHTML = plantao.map(renderPlantao).join('');
     $('#almocoGrid').innerHTML = renderAlmocoSchedule(almoco);
+    renderTimeSensitiveSections();
 
     $('#uraSection').classList.toggle('hidden', ura.length === 0);
     $('#plantaoSection').classList.toggle('hidden', plantao.length === 0);

@@ -32,9 +32,13 @@ create table if not exists public.analysts (
   name       text not null,
   email      text,
   role       text,
+  extension  text,
   color      text not null default '#13315c',
   created_at timestamptz not null default now()
 );
+
+alter table public.analysts add column if not exists extension text;
+alter table public.profiles add column if not exists analyst_id uuid unique references public.analysts(id) on delete set null;
 
 -- Escalas: kind = 'horario' (hora X a Y), 'plantao' (dia X a Y), 'almoco' (flexível)
 create table if not exists public.escalas (
@@ -44,6 +48,8 @@ create table if not exists public.escalas (
   start_value text, -- horario: "08:00" | plantao: "2026-08-01" | almoco: null
   end_value   text, -- horario: "17:00" | plantao: "2026-08-07" | almoco: null
   note        text, -- descrição flexível (usada na escala de almoço)
+  schedule_date date,
+  generated_from_plantao uuid references public.escalas(id) on delete cascade,
   active      boolean not null default true,
   created_at  timestamptz not null default now()
 );

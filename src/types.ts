@@ -5,6 +5,7 @@ export interface Analyst {
   name: string;
   email: string | null;
   role: string | null;
+  extension: string | null;
   color: string;
   created_at: string;
 }
@@ -16,6 +17,7 @@ export interface Escala {
   start_value: string | null;
   end_value: string | null;
   note: string | null;
+  schedule_date?: string | null;
   active: boolean;
   created_at: string;
   escala_analysts?: { analyst_id: Analyst | null }[];
@@ -33,6 +35,7 @@ export interface Profile {
   email: string;
   name: string | null;
   role: 'user' | 'admin';
+  analyst_id: string | null;
 }
 
 /** Escala já resolvida com a lista de analistas vinculados. */

@@ -7,6 +7,8 @@ import { toast } from './ui';
 import { fetchPublicData } from '../data';
 import { escapeHtml, formatDateBR, formatTime } from '../utils';
 import { initTheme } from '../theme';
+import { initUsers, refreshUsers } from './users';
+import { initUraConfig } from './uraConfig';
 
 const $ = <T extends HTMLElement>(sel: string): T => {
   const el = document.querySelector<T>(sel);
@@ -33,15 +35,7 @@ async function requireAdmin(): Promise<boolean> {
     .single();
 
   if (profileError || profile?.role !== 'admin') {
-    document.body.innerHTML = `
-      <div class="auth-body" style="display:grid;place-items:center;min-height:100vh">
-        <div class="auth-card">
-          <h1 style="margin-bottom:8px">Acesso restrito</h1>
-          <p>Esta conta não possui privilégios de administrador.</p>
-          <p style="margin-top:16px"><a href="/">← Voltar ao mural público</a></p>
-        </div>
-      </div>
-    `;
+    window.location.href = '/analista.html';
     return false;
   }
   const name = profile.name?.trim() || profile.email?.split('@')[0] || 'Administrador';
@@ -57,6 +51,8 @@ function initNav() {
     team: $('#view-team'),
     escalas: $('#view-escalas'),
     mural: $('#view-mural'),
+    users: $('#view-users'),
+    'ura-config': $('#view-ura-config'),
   };
 
   tabs.forEach((tab) => {
@@ -123,6 +119,7 @@ function initRealtimeUpdates() {
         jobs.push(refreshEscalas($('#escalaList')));
       }
       if (tables.has('notices')) jobs.push(refreshMural($('#muralList')));
+      if (tables.has('profiles')) jobs.push(refreshUsers($('#userList')));
       await Promise.all(jobs);
     }, 250);
   };
@@ -152,6 +149,8 @@ async function boot() {
     initTeam($('#teamList')),
     initEscalas($('#escalaList')),
     initMural($('#muralList')),
+    initUsers($('#userList')),
+    initUraConfig($('#uraConfig')),
   ]);
   initDashboardActions();
   initRealtimeUpdates();

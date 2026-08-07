@@ -1,0 +1,12 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /><title>Meu almoço · SuperEscalas</title><link rel="stylesheet" href="/src/style.css" /></head>
+  <body class="auth-body"><main class="analyst-panel"><section class="auth-card">
+    <div class="auth-logo"><div class="brand-badge">SL</div><h1>Meu horário de almoço</h1><p>Informe o horário em que você está saindo.</p></div>
+    <div class="analyst-user"><div id="userAvatar" class="avatar">--</div><div><small>Analista conectado</small><strong id="userName" style="display:block">Carregando...</strong><span id="userExtension"></span></div></div>
+    <div id="lunchStatus" class="lunch-status hidden"></div>
+    <form id="lunchForm"><div class="field-row"><div class="field"><label for="lunchStart">Saída</label><input id="lunchStart" type="time" required /></div><div class="field"><label for="lunchEnd">Retorno previsto</label><input id="lunchEnd" type="time" required /></div></div>
+      <p class="password-help">No máximo 2 analistas podem ficar em almoço ao mesmo tempo.</p><div class="lunch-form-actions"><a class="btn-ghost" href="/">Ver dashboard</a><button id="saveLunch" class="btn-primary" type="submit">Salvar horário</button></div></form>
+    <button id="logoutBtn" class="btn-mini" style="margin-top:18px;width:100%">Sair</button>
+  </section></main><div id="toast" class="toast" role="status"></div><script type="module" src="/src/analista.ts"></script></body>
+</html>

@@ -214,6 +214,17 @@ a {
   flex-wrap: wrap;
 }
 
+.lunch-counter { padding: 9px 13px; border-radius: 999px; background: #fff7ed; color: #9a3412; font-size: 12px; font-weight: 800; white-space: nowrap; border: 1px solid #fed7aa; }
+.analyst-panel { width: min(560px, calc(100% - 32px)); margin: 56px auto; }
+.analyst-panel .auth-card { width: 100%; }
+.analyst-user { display:flex; align-items:center; gap:12px; margin:20px 0; padding:14px; border-radius:12px; background:var(--surface-soft, #f8fafc); }
+.analyst-user .avatar { flex:0 0 auto; }
+.lunch-form-actions { display:flex; gap:10px; margin-top:20px; }
+.lunch-form-actions > * { flex:1; }
+.lunch-status { margin:16px 0; padding:12px 14px; border-radius:10px; background:#eff6ff; color:#1e40af; font-weight:700; }
+
+@media (max-width: 900px) { .lunch-counter { order: 3; width: 100%; text-align:center; } }
+
 .theme-toggle {
   white-space: nowrap;
 }

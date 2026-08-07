@@ -269,6 +269,10 @@ async function escalaModal(root: HTMLElement, escala?: EscalaWithAnalysts) {
               );
               if (insErr) throw new Error(insErr.message);
             }
+            if (kind === 'plantao') {
+              const { error: generateError } = await supabase.rpc('generate_ura_for_plantao', { p_plantao_id: escala!.id });
+              if (generateError) throw new Error(generateError.message);
+            }
             toast('Escala atualizada.');
           } else {
             const { data, error } = await supabase.from('escalas').insert(row).select('id').single();
@@ -283,6 +287,10 @@ async function escalaModal(root: HTMLElement, escala?: EscalaWithAnalysts) {
                 }))
               );
               if (insErr) throw new Error(insErr.message);
+            }
+            if (kind === 'plantao') {
+              const { error: generateError } = await supabase.rpc('generate_ura_for_plantao', { p_plantao_id: data!.id });
+              if (generateError) throw new Error(generateError.message);
             }
             toast('Escala criada.');
           }

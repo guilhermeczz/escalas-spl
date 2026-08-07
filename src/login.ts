@@ -35,7 +35,9 @@ async function login(username: string, password: string) {
     showError('Usuário ou senha inválidos. Verifique e tente novamente.');
     return;
   }
-  window.location.href = '/admin.html';
+  const { data: sessionData } = await supabase.auth.getSession();
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', sessionData.session!.user.id).single();
+  window.location.href = profile?.role === 'admin' ? '/admin.html' : '/analista.html';
 }
 
 function showError(message: string) {
@@ -71,5 +73,9 @@ form.addEventListener('submit', async (e) => {
 
 // Se já estiver logado, vai direto para o painel
 supabase.auth.getSession().then(({ data }) => {
-  if (data.session) window.location.href = '/admin.html';
+  if (data.session) {
+    supabase.from('profiles').select('role').eq('id', data.session.user.id).single().then(({ data: profile }) => {
+      window.location.href = profile?.role === 'admin' ? '/admin.html' : '/analista.html';
+    });
+  }
 });

@@ -35,7 +35,7 @@ async function requireAdmin(): Promise<boolean> {
     .single();
 
   if (profileError || profile?.role !== 'admin') {
-    window.location.href = '/analista.html';
+    window.location.href = '/?analista=1';
     return false;
   }
   const name = profile.name?.trim() || profile.email?.split('@')[0] || 'Administrador';

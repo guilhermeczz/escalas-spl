@@ -27,6 +27,7 @@ const emptyState = $('#emptyState');
 let clockTimer: number | undefined;
 let realtimeDebounce: number | undefined;
 let currentEscalas: EscalaWithAnalysts[] = [];
+let analystLoggedIn = false;
 
 // ---------------------------------------------------------------- clock
 function tickClock() {
@@ -34,6 +35,7 @@ function tickClock() {
   $('#clockTime').textContent = `${now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
   $('#clockDate').textContent = todayBR();
   renderTimeSensitiveSections();
+  if (analystLoggedIn) void refreshMyLunch();
 }
 
 function startClock() {
@@ -224,12 +226,92 @@ function toast(message: string) {
   window.setTimeout(() => el.classList.remove('show'), 4000);
 }
 
+function currentHHMM(date = new Date()) {
+  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+}
+
+function addOneHour(time: string) {
+  const [hours, minutes] = time.split(':').map(Number);
+  const total = hours * 60 + minutes + 60;
+  return `${String(Math.floor((total % 1440) / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
+}
+
+async function refreshMyLunch() {
+  const { data } = await supabase.rpc('get_my_lunch');
+  const lunch = Array.isArray(data) ? data[0] : data;
+  const card = $('#myLunchCard');
+  const start = lunch?.schedule_start?.slice(0, 5) as string | undefined;
+  const end = lunch?.schedule_end?.slice(0, 5) as string | undefined;
+  const now = currentHHMM();
+  const inProgress = Boolean(start && end && now >= start && now < end);
+  card.classList.toggle('in-progress', inProgress);
+  $('#myLunchStatus').textContent = inProgress ? 'Em andamento' : start && end ? 'Registrado' : 'Não registrado';
+  $('#myLunchTime').textContent = start && end ? `${formatTime(start)} às ${formatTime(end)}` : 'Informe apenas quando for sair';
+  $('#openLunchBtn').textContent = inProgress ? 'Ajustar horário' : 'Registrar almoço';
+}
+
+function openLunchEditor() {
+  const now = new Date();
+  const startNow = currentHHMM(now);
+  const expectedReturn = addOneHour(startNow);
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `<div class="modal" role="dialog" aria-modal="true"><div class="modal-head"><div><h3>Registrar saída para almoço</h3><p class="toolbar-sub">Seu retorno é calculado automaticamente para 1 hora depois.</p></div><button class="modal-close" type="button">✕</button></div><form id="myLunchForm" class="modal-body"><div class="field-row"><div class="field"><label for="myStart">Horário de saída</label><input id="myStart" type="time" value="${startNow}" required></div><div class="field"><label for="myEnd">Retorno previsto (+1 hora)</label><input id="myEnd" type="time" value="${expectedReturn}" readonly required></div></div><div class="schedule-tip"><strong>Retorno às <span id="expectedReturnText">${formatTime(expectedReturn)}</span></strong><span>O almoço tem duração padrão de 1 hora para todos.</span></div><div class="schedule-tip"><strong>Limite simultâneo</strong><span>Somente 2 analistas podem ficar em almoço ao mesmo tempo.</span></div><div class="modal-actions"><button class="btn-ghost lunch-cancel" type="button">Cancelar</button><button class="btn-primary" type="submit">Confirmar saída</button></div></form></div>`;
+  const close = () => overlay.remove();
+  overlay.querySelector('.modal-close')!.addEventListener('click', close);
+  overlay.querySelector('.lunch-cancel')!.addEventListener('click', close);
+  overlay.addEventListener('click', (event) => { if (event.target === overlay) close(); });
+  const startInput = overlay.querySelector<HTMLInputElement>('#myStart')!;
+  const endInput = overlay.querySelector<HTMLInputElement>('#myEnd')!;
+  startInput.addEventListener('input', () => {
+    if (!startInput.value) return;
+    endInput.value = addOneHour(startInput.value);
+    overlay.querySelector<HTMLElement>('#expectedReturnText')!.textContent = formatTime(endInput.value);
+  });
+  overlay.querySelector<HTMLFormElement>('#myLunchForm')!.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const start = overlay.querySelector<HTMLInputElement>('#myStart')!.value;
+    const finish = overlay.querySelector<HTMLInputElement>('#myEnd')!.value;
+    if (!start || !finish) { toast('Informe o horário de saída.'); return; }
+    const button = overlay.querySelector<HTMLButtonElement>('button[type=submit]')!;
+    button.disabled = true; button.textContent = 'Salvando...';
+    const { error } = await supabase.rpc('set_my_lunch', { p_start: start, p_end: finish });
+    if (error) { button.disabled = false; button.textContent = 'Confirmar saída'; toast(error.message.includes('LUNCH_LIMIT') ? 'Já existem 2 analistas em almoço nesse período.' : error.message); return; }
+    close(); toast('Saída para almoço registrada.'); await refreshMyLunch(); await loadPublicData(false);
+  });
+  document.body.appendChild(overlay);
+}
+
+async function initAnalystSession() {
+  const { data: auth } = await supabase.auth.getSession();
+  if (!auth.session) {
+    if (new URLSearchParams(location.search).has('analista')) location.href = '/login.html';
+    return;
+  }
+  const { data: profile } = await supabase.from('profiles').select('name,role,analyst_id,analysts(extension)').eq('id', auth.session.user.id).single();
+  if (!profile || profile.role === 'admin') return;
+  analystLoggedIn = true;
+  const analyst = Array.isArray(profile.analysts) ? profile.analysts[0] : profile.analysts;
+  const name = profile.name?.trim() || auth.session.user.email?.split('@')[0] || 'Analista';
+  $('#analystIdentity').classList.remove('hidden');
+  $('#loggedAnalystName').textContent = name;
+  $('#loggedAnalystExtension').textContent = analyst?.extension ? `Ramal ${analyst.extension}` : '';
+  $('#myLunchCard').classList.remove('hidden');
+  $('#analystLogout').classList.remove('hidden');
+  document.querySelectorAll<HTMLAnchorElement>('a[href="/login.html"]').forEach((link) => link.classList.add('hidden'));
+  if (!profile.analyst_id) { $('#myLunchStatus').textContent = 'Perfil sem vínculo'; $('#openLunchBtn').setAttribute('disabled', ''); return; }
+  await refreshMyLunch();
+}
+
 // ---------------------------------------------------------------- init
 startClock();
 initTheme();
 loadPublicData();
+initAnalystSession();
 
 $('#refreshBtn').addEventListener('click', () => loadPublicData());
+$('#openLunchBtn').addEventListener('click', openLunchEditor);
+$('#analystLogout').addEventListener('click', async () => { await supabase.auth.signOut(); location.href = '/login.html'; });
 
 function openPdfSelection() {
   if (!currentEscalas.length) {

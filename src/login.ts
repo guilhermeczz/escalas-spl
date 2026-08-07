@@ -37,7 +37,7 @@ async function login(username: string, password: string) {
   }
   const { data: sessionData } = await supabase.auth.getSession();
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', sessionData.session!.user.id).single();
-  window.location.href = profile?.role === 'admin' ? '/admin.html' : '/analista.html';
+  window.location.href = profile?.role === 'admin' ? '/admin.html' : '/?analista=1';
 }
 
 function showError(message: string) {
@@ -75,7 +75,7 @@ form.addEventListener('submit', async (e) => {
 supabase.auth.getSession().then(({ data }) => {
   if (data.session) {
     supabase.from('profiles').select('role').eq('id', data.session.user.id).single().then(({ data: profile }) => {
-      window.location.href = profile?.role === 'admin' ? '/admin.html' : '/analista.html';
+      window.location.href = profile?.role === 'admin' ? '/admin.html' : '/?analista=1';
     });
   }
 });

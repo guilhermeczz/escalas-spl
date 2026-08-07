@@ -222,8 +222,19 @@ a {
 .lunch-form-actions { display:flex; gap:10px; margin-top:20px; }
 .lunch-form-actions > * { flex:1; }
 .lunch-status { margin:16px 0; padding:12px 14px; border-radius:10px; background:#eff6ff; color:#1e40af; font-weight:700; }
+.analyst-identity { display:flex; flex-direction:column; min-width:120px; padding-left:14px; border-left:1px solid #dbe4ee; line-height:1.15; }
+.analyst-identity span { color:#2563eb; font-size:10px; font-weight:900; letter-spacing:.12em; }
+.analyst-identity strong { font-size:13px; color:var(--text, #172033); }
+.analyst-identity small { color:#64748b; font-size:11px; }
+.my-lunch-card { margin-left:auto; display:flex; align-items:center; gap:18px; padding:10px 12px 10px 16px; border:1px solid #dbeafe; border-radius:14px; background:#f8fbff; min-width:340px; }
+.my-lunch-card > div { display:flex; flex-direction:column; line-height:1.25; }
+.my-lunch-card span { color:#64748b; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; }
+.my-lunch-card strong { color:#1e3a5f; font-size:14px; }
+.my-lunch-card small { color:#64748b; font-size:11px; }
+.my-lunch-card.in-progress { background:#fff7ed; border-color:#fed7aa; }
+.my-lunch-card.in-progress strong { color:#c2410c; }
 
-@media (max-width: 900px) { .lunch-counter { order: 3; width: 100%; text-align:center; } }
+@media (max-width: 900px) { .lunch-counter { order: 3; width: 100%; text-align:center; } .my-lunch-card { order:2; width:100%; min-width:0; margin:10px 0 0; } }
 
 .theme-toggle {
   white-space: nowrap;

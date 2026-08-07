@@ -24,6 +24,7 @@
         </div>
         <div class="header-actions">
           <div id="lunchCounter" class="lunch-counter">Almoço · 0 analistas em andamento</div>
+          <div id="analystIdentity" class="analyst-identity hidden"><span>ANALISTA</span><strong id="loggedAnalystName"></strong><small id="loggedAnalystExtension"></small></div>
           <div class="clock">
             <span id="clockTime">--:--</span>
             <span id="clockDate" class="clock-date">—</span>
@@ -36,6 +37,7 @@
             </svg>
             Acesso ADM
           </a>
+          <button id="analystLogout" class="btn-ghost hidden" type="button">Sair</button>
         </div>
       </div>
     </header>
@@ -46,6 +48,10 @@
           <h2 id="pageTitle">Escalas em vigor</h2>
           <p class="toolbar-sub">Atualizado em tempo real · leitura pública</p>
         </div>
+        <aside id="myLunchCard" class="my-lunch-card hidden">
+          <div><span>Meu almoço</span><strong id="myLunchStatus">Não registrado</strong><small id="myLunchTime">Informe apenas quando for sair</small></div>
+          <button id="openLunchBtn" class="btn-primary" type="button">Registrar almoço</button>
+        </aside>
         <div class="toolbar-buttons">
           <button id="refreshBtn" class="btn-ghost" title="Atualizar dados">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

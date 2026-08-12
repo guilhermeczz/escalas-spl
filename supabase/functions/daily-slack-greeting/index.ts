@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
 
     const response = await fetch(webhook, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json; charset=utf-8' },
       body: JSON.stringify({ text: `<!channel> ☀️ *Bom dia, equipe!* ${messages[messageIndex]}` }),
     });
     if (!response.ok) {

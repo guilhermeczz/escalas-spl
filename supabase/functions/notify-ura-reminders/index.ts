@@ -18,7 +18,7 @@ Deno.serve(async(req)=>{
         const message=reminder.type==='ura_start'
           ? `⏰ ${mention}, seu horário na URA começa em *${lead} minutos*. Seu turno de hoje é das *${String(scale.start_value).slice(0,5)}* às *${String(scale.end_value).slice(0,5)}*.`
           : `⏰ ${mention}, seu turno na URA está chegando ao fim. Em *${lead} minutos*, faça o logout da URA, por favor.`;
-        const response=await fetch(webhook,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:message})});
+        const response=await fetch(webhook,{method:'POST',headers:{'Content-Type':'application/json; charset=utf-8'},body:JSON.stringify({text:message})});
         if(response.ok)sent++;else await client.from('slack_notification_log').delete().eq('id',claimed.id);
       }
     }}

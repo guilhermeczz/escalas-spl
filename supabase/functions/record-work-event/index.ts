@@ -9,7 +9,7 @@ Deno.serve(async(req)=>{
     const {eventType}=await req.json();
     const {data,error}=await client.rpc('record_my_work_event',{p_event_type:eventType}); if(error)throw error;
     const webhook=Deno.env.get('SLACK_WEBHOOK_URL'); let slackSent=false;
-    if(webhook){const time=new Date(data.occurred_at).toLocaleTimeString('pt-BR',{timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit'});const analyst=data.analyst_slack_user_id?`<@${data.analyst_slack_user_id}>`:`*${data.analyst_name}*`;const response=await fetch(webhook,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:`O analista ${analyst} ${labels[data.event_type]} às *${time}*.`})});slackSent=response.ok;}
+    if(webhook){const time=new Date(data.occurred_at).toLocaleTimeString('pt-BR',{timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit'});const analyst=data.analyst_slack_user_id?`<@${data.analyst_slack_user_id}>`:`*${data.analyst_name}*`;const response=await fetch(webhook,{method:'POST',headers:{'Content-Type':'application/json; charset=utf-8'},body:JSON.stringify({text:`O analista ${analyst} ${labels[data.event_type]} às *${time}*.`})});slackSent=response.ok;}
     return new Response(JSON.stringify({...data,slack_sent:slackSent,slack_configured:Boolean(webhook)}),{headers:{...cors,'Content-Type':'application/json'}});
   }catch(error){return new Response(JSON.stringify({error:error instanceof Error?error.message:'Erro interno'}),{status:400,headers:{...cors,'Content-Type':'application/json'}});}
 });

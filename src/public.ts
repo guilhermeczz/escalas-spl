@@ -108,6 +108,13 @@ function renderPlantao(escala: EscalaWithAnalysts): string {
     .join('');
 }
 
+function sortPlantaoByDate(escalas: EscalaWithAnalysts[]): EscalaWithAnalysts[] {
+  return [...escalas].sort((a, b) =>
+    (a.start_value ?? '9999-12-31').localeCompare(b.start_value ?? '9999-12-31')
+    || (a.end_value ?? '9999-12-31').localeCompare(b.end_value ?? '9999-12-31')
+  );
+}
+
 function renderAlmoco(escala: EscalaWithAnalysts): string {
   const inProgress = (analyst: EscalaWithAnalysts['analysts'][number]) => activeLunchAnalystIds.has(analyst.id);
   return escala.analysts
@@ -194,7 +201,7 @@ async function loadPublicData(showLoading = true) {
 
     const localDate = new Date().toLocaleDateString('sv-SE');
     const ura = escalas.filter((e) => e.kind === 'horario' && (!e.schedule_date || e.schedule_date === localDate));
-    const plantao = escalas.filter((e) => e.kind === 'plantao');
+    const plantao = sortPlantaoByDate(escalas.filter((e) => e.kind === 'plantao'));
     const almoco = escalas.filter((e) => e.kind === 'almoco');
 
     $('#uraGrid').innerHTML = ura.map(renderUra).join('');

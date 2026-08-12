@@ -23,7 +23,12 @@ function describe(escala: EscalaWithAnalysts): string {
 export async function refreshEscalas(root: HTMLElement) {
   root.innerHTML = `<div class="list-loading">Carregando escalas...</div>`;
   try {
-    const escalas = await fetchAllEscalas();
+    const escalas = (await fetchAllEscalas()).sort((a, b) => {
+      if (a.kind === 'plantao' && b.kind === 'plantao') {
+        return (a.start_value ?? '9999-12-31').localeCompare(b.start_value ?? '9999-12-31');
+      }
+      return a.created_at.localeCompare(b.created_at);
+    });
     if (escalas.length === 0) {
       root.innerHTML = `<div class="empty-inline">Nenhuma escala criada ainda.</div>`;
       return;

@@ -120,7 +120,11 @@ async function renderOverview() {
   const { notices, escalas } = await fetchPublicData();
   const row = (name: string, detail: string, label: string) => `<div class="overview-row"><strong>${escapeHtml(name)}</strong><span>${detail}</span><em>${label}</em></div>`;
   const ura = summarizeUra(escalas);
-  const plantao = escalas.filter((item) => item.kind === 'plantao').flatMap((item) => item.analysts.map((person) => row(person.name, `${formatDateBR(item.start_value ?? '')} a ${formatDateBR(item.end_value ?? '')}`, 'Plantão'))).join('');
+  const plantao = escalas
+    .filter((item) => item.kind === 'plantao')
+    .sort((a, b) => (a.start_value ?? '9999-12-31').localeCompare(b.start_value ?? '9999-12-31'))
+    .flatMap((item) => item.analysts.map((person) => row(person.name, `${formatDateBR(item.start_value ?? '')} a ${formatDateBR(item.end_value ?? '')}`, 'Plantão')))
+    .join('');
   const almoco = escalas.filter((item) => item.kind === 'almoco')
     .flatMap((item) => item.analysts)
     .sort((a, b) => (a.schedule_start ?? '99:99').localeCompare(b.schedule_start ?? '99:99'))

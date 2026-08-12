@@ -1,0 +1,345 @@
+APRESENTAÇÃO EXECUTIVA — GESTÃO DE ESCALAS E OPERAÇÃO DA URA
+Área: Controle de Acesso
+Público: Diretoria
+Formato sugerido: 10 slides | 10 a 15 minutos
+
+
+1. OBJETIVO DA APRESENTAÇÃO
+
+Apresentar a solução criada para centralizar escalas, organizar a operação da URA,
+acompanhar jornadas e automatizar a comunicação da equipe pelo Slack.
+
+Mensagem principal:
+“Transformamos uma rotina manual e dispersa em um fluxo centralizado, rastreável e
+automatizado, com informação em tempo real para analistas e gestão.”
+
+
+2. ROTEIRO DOS SLIDES
+
+SLIDE 1 — CAPA
+
+Título:
+Gestão de Escalas e Operação da URA
+
+Subtítulo:
+Organização, visibilidade e comunicação em tempo real
+
+Rodapé:
+Controle de Acesso | Superlógica
+
+PRINT SUGERIDO:
+- Tela pública completa, mostrando o cabeçalho e as escalas.
+- Usar o print como fundo ou imagem lateral.
+
+
+SLIDE 2 — CONTEXTO E DESAFIO
+
+Título:
+O desafio operacional
+
+Conteúdo:
+- Escalas e horários distribuídos em diferentes controles.
+- Risco de esquecimento no início e no encerramento do turno da URA.
+- Baixa visibilidade sobre plantões, almoço e disponibilidade da equipe.
+- Registros de jornada dependentes de acompanhamento manual.
+- Comunicação operacional sem padronização e sem histórico centralizado.
+
+Mensagem do apresentador:
+“A necessidade não era apenas exibir uma escala, mas conectar planejamento,
+execução, comunicação e rastreabilidade em um único fluxo.”
+
+PRINT SUGERIDO:
+- Não é obrigatório. Pode usar ícones de calendário, relógio, headset e Slack.
+
+
+SLIDE 3 — VISÃO GERAL DA SOLUÇÃO
+
+Título:
+Uma plataforma central para a operação
+
+Conteúdo:
+- Visão diária das escalas de URA, plantão e almoço.
+- Área individual para registro da jornada.
+- Painel administrativo para equipe, usuários e escalas.
+- Configuração automática da URA conforme o plantonista.
+- Atualização em tempo real.
+- Integração automática com o Slack.
+- Relatórios e exportação em PDF.
+
+Mensagem do apresentador:
+“A gestão configura uma vez; o sistema distribui a informação, orienta a equipe e
+registra os eventos importantes.”
+
+PRINT SUGERIDO:
+- Visão geral do painel administrativo.
+- Arquivo sugerido: 03-painel-administrativo.png
+
+
+SLIDE 4 — EXPERIÊNCIA DO ANALISTA
+
+Título:
+Jornada simples e orientada
+
+Conteúdo:
+O analista acompanha a própria jornada em quatro etapas:
+1. Entrada
+2. Almoço
+3. Retorno do almoço
+4. Fim do expediente
+
+Benefícios:
+- Próxima ação indicada visualmente.
+- Horário real registrado em cada evento.
+- Retorno de almoço aceito após o horário previsto, preservando o horário real.
+- Estado da jornada atualizado durante o dia.
+
+PRINTS SUGERIDOS:
+- Painel “Minha jornada” antes da entrada.
+- Painel com uma ou mais etapas concluídas.
+- Modal de confirmação de um evento.
+- Arquivos sugeridos: 04a-minha-jornada.png e 04b-confirmacao-ponto.png
+
+
+SLIDE 5 — GESTÃO DA URA
+
+Título:
+Escala da URA automatizada por plantonista
+
+Conteúdo:
+- O administrador define previamente quem participa da URA e em qual horário.
+- Ao criar o plantão da semana, as escalas correspondentes são geradas
+  automaticamente para cada dia.
+- A visualização administrativa consolida repetições por pessoa e horário.
+- Se o horário mudar, o sistema mantém a informação em uma linha separada.
+
+Exemplo visual:
+Guilherme | 08:00–12:00 | Seg a sex
+Gustavo   | 12:00–17:00 | Seg a sex
+
+Mensagem do apresentador:
+“A automação reduz cadastro repetitivo e evita uma sequência de cards com a mesma
+informação.”
+
+PRINTS SUGERIDOS:
+- Tela “URA por plantonista”.
+- Card consolidado de Atendimento URA na visão administrativa.
+- Arquivos sugeridos: 05a-configuracao-ura.png e 05b-ura-consolidada.png
+
+
+SLIDE 6 — ORGANIZAÇÃO DO ALMOÇO
+
+Título:
+Controle de almoço com capacidade operacional
+
+Conteúdo:
+- Saídas organizadas em intervalos de 30 minutos.
+- Até quatro analistas simultaneamente em almoço.
+- Horários planejados apresentados em ordem.
+- Saída e retorno reais ficam registrados.
+- Retornos após o horário previsto continuam permitidos e são salvos normalmente.
+
+Mensagem do apresentador:
+“O sistema organiza a capacidade sem perder o registro do que realmente aconteceu.”
+
+PRINTS SUGERIDOS:
+- Escala de almoço organizada por faixa de horário.
+- Modal de início ou retorno do almoço.
+- Relatório mostrando saída, retorno previsto e retorno real.
+- Arquivos sugeridos: 06a-escala-almoco.png e 06b-historico-almoco.png
+
+
+SLIDE 7 — INTEGRAÇÃO COM O SLACK
+
+Título:
+Comunicação automática no momento certo
+
+Conteúdo:
+- Menção individual cinco minutos antes de entrar na URA.
+- Aviso cinco minutos antes do encerramento do turno da URA.
+- Comunicação dos quatro eventos da jornada no canal.
+- Mensagem positiva diária, de segunda a sábado, às 08h.
+- Controle de duplicidade dos avisos automáticos.
+
+Exemplos das mensagens:
+
+Entrada na URA:
+“@Analista, seu horário na URA começa em 5 minutos. Seu turno de hoje é das
+08:00 às 12:00.”
+
+Saída da URA:
+“@Analista, seu turno na URA está chegando ao fim. Em 5 minutos, faça o logout
+da URA, por favor.”
+
+Registro da jornada:
+“O analista @Nome iniciou a entrada no expediente de hoje às 08:00.”
+
+PRINTS SUGERIDOS:
+- Mensagem real do lembrete de entrada na URA.
+- Mensagem real do registro de jornada.
+- Mensagem positiva diária.
+- Arquivos sugeridos: 07a-slack-ura.png, 07b-slack-ponto.png e
+  07c-slack-bom-dia.png
+
+
+SLIDE 8 — REGRAS OPERACIONAIS
+
+Título:
+O sistema acompanha a rotina da equipe
+
+Conteúdo:
+- Turno 1: segunda a sexta, das 08h às 17h.
+- Turno 2: segunda a sexta, das 09h às 18h.
+- Plantonista: segunda a sexta, das 14h às 22h.
+- Sábado: somente plantonista, das 08h às 22h.
+- Domingo e madrugada: operação OFF.
+- Retorno de almoço e fim de expediente podem ser registrados com atraso para
+  preservar o horário real.
+
+Observação importante:
+A janela geral está configurada. A divisão nominal dos analistas entre os turnos
+08h–17h e 09h–18h pode ser adicionada ao cadastro para uma validação individual.
+
+PRINT SUGERIDO:
+- Pode ser um quadro visual de horários, sem captura do sistema.
+
+
+SLIDE 9 — GESTÃO, SEGURANÇA E RASTREABILIDADE
+
+Título:
+Controle administrativo e histórico confiável
+
+Conteúdo:
+- Acesso autenticado para administradores e analistas.
+- Permissões separadas por perfil.
+- Escrita administrativa protegida por regras no banco.
+- Histórico de jornada, almoço e escalas.
+- Atualizações em tempo real.
+- Relatórios por analista e período.
+- Exportação de escalas em PDF.
+
+Mensagem do apresentador:
+“Além de organizar o presente, a solução cria histórico para consulta e tomada de
+decisão.”
+
+PRINTS SUGERIDOS:
+- Tela de login.
+- Tela de relatórios com dados de exemplo ou reais anonimizados.
+- Modal de exportação em PDF.
+- Arquivos sugeridos: 09a-login.png, 09b-relatorios.png e 09c-exportar-pdf.png
+
+
+SLIDE 10 — RESULTADOS E PRÓXIMOS PASSOS
+
+Título:
+Ganhos esperados para a operação
+
+Conteúdo:
+- Menos esquecimentos na troca de operadores da URA.
+- Menos trabalho manual na montagem das escalas.
+- Informação única e atualizada para toda a equipe.
+- Maior previsibilidade das pausas e plantões.
+- Registro confiável dos eventos da jornada.
+- Comunicação padronizada e proativa pelo Slack.
+- Base de dados para análise e melhoria contínua.
+
+Próximos passos sugeridos:
+- Vincular nominalmente cada analista ao turno 08h–17h ou 09h–18h.
+- Acompanhar indicadores de pontualidade e cobertura da URA.
+- Criar visão mensal de aderência às escalas.
+- Reunir feedback dos analistas após o período inicial de uso.
+
+Frase de encerramento:
+“Mais do que digitalizar uma escala, a solução conecta planejamento, pessoas e
+execução operacional.”
+
+
+3. CHECKLIST DOS PRINTS
+
+[ ] 01-capa-visao-publica.png
+    Tela pública completa, com escalas visíveis.
+
+[ ] 03-painel-administrativo.png
+    Visão geral administrativa com URA, plantão e almoço.
+
+[ ] 04a-minha-jornada.png
+    Botões Entrada, Almoço, Retorno e Fim do expediente.
+
+[ ] 04b-confirmacao-ponto.png
+    Modal de confirmação de um evento da jornada.
+
+[ ] 05a-configuracao-ura.png
+    Configuração da URA por plantonista.
+
+[ ] 05b-ura-consolidada.png
+    Pessoas e horários consolidados na visão administrativa.
+
+[ ] 06a-escala-almoco.png
+    Grupos de almoço ordenados por horário.
+
+[ ] 06b-historico-almoco.png
+    Relatório com saída, retorno previsto e retorno real.
+
+[ ] 07a-slack-ura.png
+    Lembrete real de início ou encerramento da URA.
+
+[ ] 07b-slack-ponto.png
+    Mensagem real de um evento de jornada.
+
+[ ] 07c-slack-bom-dia.png
+    Mensagem positiva diária mencionando o canal.
+
+[ ] 09a-login.png
+    Tela inicial de autenticação.
+
+[ ] 09b-relatorios.png
+    Relatórios operacionais.
+
+[ ] 09c-exportar-pdf.png
+    Seleção de escalas para exportação.
+
+
+4. ORIENTAÇÕES PARA CAPTURA
+
+- Capturar em resolução mínima de 1920 × 1080.
+- Usar o mesmo tema visual em todos os prints, preferencialmente o tema claro.
+- Manter zoom do navegador em 100%.
+- Fechar abas, favoritos e notificações pessoais antes da captura.
+- Usar dados reais somente quando forem adequados para apresentação interna.
+- Ocultar senhas, e-mails pessoais, tokens, webhooks e chaves de acesso.
+- Não mostrar a URL completa do webhook do Slack nem credenciais do Supabase.
+- Nos prints do Slack, ocultar conversas paralelas e informações fora do projeto.
+- Destacar a área importante com recorte ou moldura, sem excesso de anotações.
+- Evitar telas vazias; preparar uma semana representativa antes das capturas.
+
+
+5. PADRÃO VISUAL SUGERIDO
+
+- Formato: 16:9.
+- Fundo: branco ou cinza muito claro.
+- Cor principal: azul institucional usado no sistema.
+- Cor de apoio: verde para resultados e automações ativas.
+- Títulos curtos, com no máximo duas linhas.
+- Um print principal por slide; usar dois apenas quando houver comparação.
+- Máximo de cinco ou seis tópicos por slide.
+- Usar números grandes para destacar: “5 minutos”, “4 analistas”, “tempo real”
+  e “4 etapas da jornada”.
+
+
+6. DEMONSTRAÇÃO AO VIVO OPCIONAL — 3 MINUTOS
+
+1. Abrir a visão pública e mostrar URA, plantão e almoço.
+2. Entrar como analista e registrar uma etapa da jornada.
+3. Mostrar a mensagem correspondente no Slack.
+4. Abrir o painel administrativo e mostrar a URA consolidada.
+5. Mostrar rapidamente a configuração automática por plantonista.
+
+Plano de contingência:
+Manter os prints dentro da apresentação caso internet, autenticação ou Slack não
+estejam disponíveis durante a reunião.
+
+
+7. RESUMO EXECUTIVO EM UMA FRASE
+
+“A plataforma centraliza escalas, orienta a jornada dos analistas e automatiza os
+avisos operacionais, reduzindo trabalho manual e aumentando a previsibilidade da
+operação de Controle de Acesso.”

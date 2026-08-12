@@ -10,6 +10,7 @@ import { initTheme } from '../theme';
 import { initUsers, refreshUsers } from './users';
 import { initUraConfig } from './uraConfig';
 import { initReports } from './reports';
+import type { EscalaWithAnalysts } from '../types';
 
 const $ = <T extends HTMLElement>(sel: string): T => {
   const el = document.querySelector<T>(sel);
@@ -21,6 +22,54 @@ const loading = $('#loading');
 let realtimeDebounce: number | undefined;
 let realtimeChannel: ReturnType<typeof supabase.channel> | undefined;
 const changedTables = new Set<string>();
+
+type UraSummary = {
+  analyst: EscalaWithAnalysts['analysts'][number];
+  start: string;
+  end: string;
+  dates: Set<string>;
+  recurring: boolean;
+};
+
+function shortDate(value: string): string {
+  const [year, month, day] = value.split('-');
+  return year && month && day ? `${day}/${month}` : formatDateBR(value);
+}
+
+function summarizeUraDates(dates: Set<string>, recurring: boolean): string {
+  if (recurring) return 'Todos os dias';
+  const sorted = Array.from(dates).sort();
+  if (!sorted.length) return '';
+  const weekday = (value: string) => new Intl.DateTimeFormat('pt-BR', { weekday: 'short' })
+    .format(new Date(`${value}T12:00:00`))
+    .replace('.', '')
+    .replace(/^./, (letter) => letter.toUpperCase());
+  if (sorted.length === 1) return `${weekday(sorted[0])} · ${shortDate(sorted[0])}`;
+  const last = sorted[sorted.length - 1];
+  return `${weekday(sorted[0])} a ${weekday(last)} · ${shortDate(sorted[0])} a ${shortDate(last)}`;
+}
+
+function summarizeUra(escalas: EscalaWithAnalysts[]): string {
+  const groups = new Map<string, UraSummary>();
+  for (const escala of escalas.filter((item) => item.kind === 'horario')) {
+    const start = escala.start_value ?? '';
+    const end = escala.end_value ?? '';
+    for (const analyst of escala.analysts) {
+      const key = `${analyst.id}|${start}|${end}`;
+      const summary = groups.get(key) ?? { analyst, start, end, dates: new Set<string>(), recurring: false };
+      if (escala.schedule_date) summary.dates.add(escala.schedule_date);
+      else summary.recurring = true;
+      groups.set(key, summary);
+    }
+  }
+  return Array.from(groups.values())
+    .sort((a, b) => a.start.localeCompare(b.start) || a.analyst.name.localeCompare(b.analyst.name, 'pt-BR'))
+    .map((group) => {
+      const period = summarizeUraDates(group.dates, group.recurring);
+      return `<div class="overview-row overview-ura-row"><strong>${escapeHtml(group.analyst.name)}</strong><span><b>${formatTime(group.start)} – ${formatTime(group.end)}</b>${period ? `<small>${escapeHtml(period)}</small>` : ''}</span><em>Ativo</em></div>`;
+    })
+    .join('');
+}
 
 async function requireAdmin(): Promise<boolean> {
   const { data, error } = await supabase.auth.getSession();
@@ -70,7 +119,7 @@ function initNav() {
 async function renderOverview() {
   const { notices, escalas } = await fetchPublicData();
   const row = (name: string, detail: string, label: string) => `<div class="overview-row"><strong>${escapeHtml(name)}</strong><span>${detail}</span><em>${label}</em></div>`;
-  const ura = escalas.filter((item) => item.kind === 'horario').flatMap((item) => item.analysts.map((person) => row(person.name, `${formatTime(item.start_value ?? '')} – ${formatTime(item.end_value ?? '')}`, 'Ativo'))).join('');
+  const ura = summarizeUra(escalas);
   const plantao = escalas.filter((item) => item.kind === 'plantao').flatMap((item) => item.analysts.map((person) => row(person.name, `${formatDateBR(item.start_value ?? '')} a ${formatDateBR(item.end_value ?? '')}`, 'Plantão'))).join('');
   const almoco = escalas.filter((item) => item.kind === 'almoco')
     .flatMap((item) => item.analysts)

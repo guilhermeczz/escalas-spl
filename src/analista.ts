@@ -22,5 +22,5 @@ async function boot() {
 }
 $('#lunchForm').addEventListener('submit', async (event) => { event.preventDefault(); const start = $<HTMLInputElement>('#lunchStart').value; const end = $<HTMLInputElement>('#lunchEnd').value; if (end <= start) { toast('O retorno deve ser posterior à saída.'); return; }
   const button = $<HTMLButtonElement>('#saveLunch'); button.disabled = true; button.textContent = 'Salvando...'; const { error } = await supabase.rpc('set_my_lunch', { p_start: start, p_end: end }); button.disabled = false; button.textContent = 'Salvar horário';
-  if (error) { toast(error.message.includes('LUNCH_LIMIT') ? 'Já existem 2 analistas em almoço nesse período. Escolha outro horário.' : error.message); return; } toast('Horário de almoço atualizado.'); await loadLunch(); });
+  if (error) { toast(error.message.includes('LUNCH_LIMIT') ? 'Já existem 4 analistas em almoço nesse período. Escolha outro horário.' : error.message); return; } toast('Horário de almoço atualizado.'); await loadLunch(); });
 $('#logoutBtn').addEventListener('click', async () => { await supabase.auth.signOut(); location.href = '/login.html'; }); boot();

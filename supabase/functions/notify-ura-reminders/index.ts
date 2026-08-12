@@ -12,10 +12,13 @@ Deno.serve(async(req)=>{
     const {data:scales,error}=await client.from('escalas').select('id,start_value,end_value,escala_analysts(analyst_id(id,name,slack_user_id))').eq('kind','horario').eq('active',true).eq('schedule_date',today); if(error)throw error;
     let sent=0;
     for(const scale of scales??[]){for(const link of scale.escala_analysts??[]){const analyst=Array.isArray(link.analyst_id)?link.analyst_id[0]:link.analyst_id;if(!analyst)continue;
-      for(const reminder of [{type:'ura_start',time:scale.start_value,text:'está prestes a *entrar na URA*'},{type:'ura_end',time:scale.end_value,text:'está prestes a *encerrar o horário da URA*'}]){const [h,m]=String(reminder.time).slice(0,5).split(':').map(Number);if(h*60+m-nowMinutes!==lead)continue;
+      for(const reminder of [{type:'ura_start',time:scale.start_value},{type:'ura_end',time:scale.end_value}]){const [h,m]=String(reminder.time).slice(0,5).split(':').map(Number);if(h*60+m-nowMinutes!==lead)continue;
         const {data:claimed,error:claimError}=await client.from('slack_notification_log').insert({escala_id:scale.id,analyst_id:analyst.id,schedule_date:today,notification_type:reminder.type}).select('id').maybeSingle();if(claimError||!claimed)continue;
         const mention=analyst.slack_user_id?`<@${analyst.slack_user_id}>`:`*${analyst.name}*`;
-        const response=await fetch(webhook,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:`⏰ ${mention} ${reminder.text} às *${String(reminder.time).slice(0,5)}*.`})});
+        const message=reminder.type==='ura_start'
+          ? `⏰ ${mention}, seu horário na URA começa em *${lead} minutos*. Seu turno de hoje é das *${String(scale.start_value).slice(0,5)}* às *${String(scale.end_value).slice(0,5)}*.`
+          : `⏰ ${mention}, seu turno na URA está chegando ao fim. Em *${lead} minutos*, faça o logout da URA, por favor.`;
+        const response=await fetch(webhook,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:message})});
         if(response.ok)sent++;else await client.from('slack_notification_log').delete().eq('id',claimed.id);
       }
     }}

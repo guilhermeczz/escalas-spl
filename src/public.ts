@@ -28,10 +28,6 @@ let currentEscalas: EscalaWithAnalysts[] = [];
 let analystLoggedIn = false;
 let activeLunchAnalystIds = new Set<string>();
 let activeWorkdayAnalystIds = new Set<string>();
-let myActiveLunch = false;
-let myLunchCanReturn = false;
-let myPlannedLunchStart: string | undefined;
-let myPlannedLunchEnd: string | undefined;
 
 // ---------------------------------------------------------------- clock
 function tickClock() {
@@ -249,74 +245,32 @@ function toast(message: string) {
   window.setTimeout(() => el.classList.remove('show'), 4000);
 }
 
-function currentHHMM(date = new Date()) {
-  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
-}
-
-function addOneHour(time: string) {
-  const [hours, minutes] = time.split(':').map(Number);
-  const total = hours * 60 + minutes + 60;
-  return `${String(Math.floor((total % 1440) / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
-}
-
 async function refreshMyLunch() {
-  const [{ data }] = await Promise.all([supabase.rpc('get_my_lunch'), refreshOperationalCounters()]);
+  const [{ data }, { data: workday }] = await Promise.all([supabase.rpc('get_my_lunch'), supabase.rpc('get_my_workday'), refreshOperationalCounters()]);
   const lunch = Array.isArray(data) ? data[0] : data;
   const card = $('#myLunchCard');
   const start = lunch?.schedule_start?.slice(0, 5) as string | undefined;
   const end = lunch?.schedule_end?.slice(0, 5) as string | undefined;
-  myPlannedLunchStart = start;
-  myPlannedLunchEnd = end;
+  const events = (workday ?? []) as { event_type: WorkEventType; occurred_at: string }[];
+  const last = events.length ? events[events.length - 1] : undefined;
+  const lunchEvent = events.find((event) => event.event_type === 'lunch');
+  const completed = last?.event_type === 'lunch_return' || last?.event_type === 'shift_end';
+  card.classList.toggle('hidden', completed);
   $('#myLunchPlanned').textContent = start && end ? `${formatTime(start)} às ${formatTime(end)}` : 'Não definido';
-  myActiveLunch = Boolean(lunch?.event_id && !lunch?.returned_at);
-  const completed = Boolean(lunch?.returned_at);
-  card.classList.toggle('in-progress', myActiveLunch);
-  if (myActiveLunch) {
-    const returnUnlock = new Date(new Date(lunch.started_at).getTime() + 59 * 60 * 1000);
-    myLunchCanReturn = Date.now() >= returnUnlock.getTime();
+  const inLunch = last?.event_type === 'lunch';
+  card.classList.toggle('in-progress', inLunch);
+  if (inLunch && lunchEvent) {
+    const returnUnlock = new Date(new Date(lunchEvent.occurred_at).getTime() + 59 * 60 * 1000);
+    const canReturn = Date.now() >= returnUnlock.getTime();
     $('#myLunchStatus').textContent = 'Em andamento';
-    $('#myLunchTime').textContent = myLunchCanReturn
-      ? `Retorno previsto às ${new Date(lunch.expected_return_at).toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' })}`
+    $('#myLunchTime').textContent = canReturn
+      ? 'O retorno já pode ser registrado'
       : `Retorno liberado às ${returnUnlock.toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' })}`;
-    $('#openLunchBtn').textContent = myLunchCanReturn ? 'Registrar retorno' : 'Retorno bloqueado';
-    if (myLunchCanReturn) $('#openLunchBtn').removeAttribute('disabled'); else $('#openLunchBtn').setAttribute('disabled', '');
-  } else if (completed) {
-    myLunchCanReturn = false;
-    $('#myLunchStatus').textContent = 'Concluído';
-    $('#myLunchTime').textContent = `Retorno registrado às ${new Date(lunch.returned_at).toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' })}`;
-    $('#openLunchBtn').textContent = 'Almoço concluído';
-    $('#openLunchBtn').setAttribute('disabled', '');
   } else {
-    myLunchCanReturn = false;
-    $('#openLunchBtn').removeAttribute('disabled');
     $('#myLunchStatus').textContent = 'Almoço não registrado';
     $('#myLunchTime').textContent = start && end ? 'Você pode sair fora do horário previsto' : 'Registre somente quando for sair';
-    $('#openLunchBtn').textContent = 'Registrar almoço';
   }
   renderTimeSensitiveSections();
-}
-
-function openLunchEditor() {
-  const now = new Date();
-  const expectedReturn = addOneHour(currentHHMM(now));
-  const currentTime = currentHHMM(now);
-  const outsidePlannedTime = Boolean(myPlannedLunchStart && myPlannedLunchEnd && (currentTime < myPlannedLunchStart || currentTime >= myPlannedLunchEnd));
-  const overlay = document.createElement('div');
-  overlay.className = 'modal-overlay';
-  overlay.innerHTML = `<div class="modal" role="dialog" aria-modal="true"><div class="modal-head"><div><h3>${myActiveLunch ? 'Registrar retorno' : 'Iniciar almoço agora'}</h3><p class="toolbar-sub">${myActiveLunch ? 'Confirme que você já retornou ao atendimento.' : 'A saída será registrada com o horário atual.'}</p></div><button class="modal-close" type="button">✕</button></div><form id="myLunchForm" class="modal-body">${myActiveLunch ? '<div class="schedule-tip"><strong>Retornar ao atendimento</strong><span>O horário real será salvo, mesmo após o previsto.</span></div>' : `${outsidePlannedTime ? `<div class="schedule-tip lunch-outside-warning"><strong>Você está saindo fora do horário previsto</strong><span>Previsto: ${formatTime(myPlannedLunchStart!)} às ${formatTime(myPlannedLunchEnd!)} · Saída agora: ${formatTime(currentTime)}. Confirme se deseja realmente iniciar o almoço neste horário.</span></div>` : ''}<div class="schedule-tip"><strong>Retorno previsto às ${formatTime(expectedReturn)}</strong><span>O retorno só poderá ser registrado depois de 59 minutos.</span></div><div class="schedule-tip"><strong>Limite simultâneo</strong><span>Até 4 analistas podem ficar em almoço ao mesmo tempo.</span></div>`}<div class="modal-actions"><button class="btn-ghost lunch-cancel" type="button">Cancelar</button><button class="btn-primary" type="submit">${myActiveLunch ? 'Confirmar retorno' : outsidePlannedTime ? 'Sim, iniciar agora' : 'Confirmar saída'}</button></div></form></div>`;
-  const close = () => overlay.remove();
-  overlay.querySelector('.modal-close')!.addEventListener('click', close);
-  overlay.querySelector('.lunch-cancel')!.addEventListener('click', close);
-  overlay.addEventListener('click', (event) => { if (event.target === overlay) close(); });
-  overlay.querySelector<HTMLFormElement>('#myLunchForm')!.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    const button = overlay.querySelector<HTMLButtonElement>('button[type=submit]')!;
-    button.disabled = true; button.textContent = 'Salvando...';
-    const { error } = await supabase.rpc(myActiveLunch ? 'finish_my_lunch' : 'start_my_lunch');
-    if (error) { button.disabled = false; button.textContent = myActiveLunch ? 'Confirmar retorno' : 'Confirmar saída'; toast(error.message.includes('LUNCH_LIMIT') ? 'Já existem 4 analistas em almoço. Aguarde um deles retornar.' : error.message.includes('RETURN_TOO_EARLY') ? 'O retorno só é liberado após 59 minutos de almoço.' : error.message); return; }
-    const returning = myActiveLunch; close(); toast(returning ? 'Retorno registrado.' : 'Saída para almoço registrada.'); await refreshMyLunch();
-  });
-  document.body.appendChild(overlay);
 }
 
 async function initAnalystSession(): Promise<boolean> {
@@ -345,7 +299,7 @@ async function initAnalystSession(): Promise<boolean> {
   $('#myLunchCard').classList.remove('hidden');
   $('#analystLogout').classList.remove('hidden');
   document.querySelectorAll<HTMLAnchorElement>('a[href="/login.html"]').forEach((link) => link.classList.add('hidden'));
-  if (!profile.analyst_id) { $('#myLunchStatus').textContent = 'Perfil sem vínculo'; $('#openLunchBtn').setAttribute('disabled', ''); return true; }
+  if (!profile.analyst_id) { $('#myLunchStatus').textContent = 'Perfil sem vínculo'; return true; }
   await Promise.all([refreshMyLunch(), refreshWorkday()]);
   return true;
 }
@@ -393,7 +347,6 @@ initAnalystSession().then((allowed) => {
 });
 
 $('#refreshBtn').addEventListener('click', () => loadPublicData());
-$('#openLunchBtn').addEventListener('click', openLunchEditor);
 document.querySelectorAll<HTMLButtonElement>('[data-work-event]').forEach((button)=>button.addEventListener('click',()=>confirmWorkEvent(button.dataset.workEvent as WorkEventType)));
 $('#analystLogout').addEventListener('click', async () => { await supabase.auth.signOut(); location.href = '/login.html'; });
 

@@ -23,7 +23,6 @@
           </div>
         </div>
         <div class="header-actions">
-          <div id="lunchCounter" class="lunch-counter">Almoço · 0 analistas em andamento</div>
           <div id="analystIdentity" class="analyst-identity hidden"><span>ANALISTA</span><strong id="loggedAnalystName"></strong><small id="loggedAnalystExtension"></small></div>
           <div class="clock">
             <span id="clockTime">--:--</span>
@@ -49,7 +48,7 @@
           <p class="toolbar-sub">Atualizado em tempo real · leitura pública</p>
         </div>
         <aside id="myLunchCard" class="my-lunch-card hidden">
-          <div><span>Meu almoço</span><strong id="myLunchStatus">Não registrado</strong><small id="myLunchTime">Informe apenas quando for sair</small></div>
+          <div><span>Horário previsto</span><strong id="myLunchPlanned">Não definido</strong><small id="myLunchStatus">Almoço não registrado</small><small id="myLunchTime">Você pode sair fora do horário previsto</small></div>
           <button id="openLunchBtn" class="btn-primary" type="button">Registrar almoço</button>
         </aside>
         <div class="toolbar-buttons">
@@ -61,6 +60,11 @@
           </button>
         </div>
       </div>
+
+      <section class="operational-counters no-print" aria-label="Indicadores da equipe">
+        <article class="operational-counter counter-workday"><span class="counter-icon">●</span><div><small>Em expediente</small><strong id="workdayCounterValue">0</strong><span id="workdayCounterText">analistas ativos</span></div></article>
+        <article class="operational-counter counter-lunch"><span class="counter-icon">●</span><div><small>Em almoço</small><strong id="lunchCounterValue">0</strong><span id="lunchCounterText">analistas em pausa</span></div></article>
+      </section>
 
       <section id="mural" class="mural hidden" aria-label="Mural de avisos"></section>
 

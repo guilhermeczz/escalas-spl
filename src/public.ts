@@ -27,6 +27,7 @@ let realtimeDebounce: number | undefined;
 let currentEscalas: EscalaWithAnalysts[] = [];
 let analystLoggedIn = false;
 let activeLunchAnalystIds = new Set<string>();
+let activeWorkdayAnalystIds = new Set<string>();
 let myActiveLunch = false;
 let myLunchCanReturn = false;
 let myPlannedLunchStart: string | undefined;
@@ -138,8 +139,27 @@ function renderTimeSensitiveSections() {
   const almoco = currentEscalas.filter((e) => e.kind === 'almoco');
   $('#uraGrid').innerHTML = ura.map(renderUra).join('');
   $('#almocoGrid').innerHTML = renderAlmocoSchedule(almoco);
+  renderOperationalCounters();
+}
+
+function renderOperationalCounters() {
+  const workdayCount = activeWorkdayAnalystIds.size;
   const lunchCount = activeLunchAnalystIds.size;
-  $('#lunchCounter').textContent = `Almoço · ${lunchCount} ${lunchCount === 1 ? 'analista' : 'analistas'} em andamento`;
+  $('#workdayCounterValue').textContent = String(workdayCount);
+  $('#workdayCounterText').textContent = workdayCount === 1 ? 'analista ativo' : 'analistas ativos';
+  $('#lunchCounterValue').textContent = String(lunchCount);
+  $('#lunchCounterText').textContent = lunchCount === 1 ? 'analista em pausa' : 'analistas em pausa';
+}
+
+async function refreshOperationalCounters() {
+  const [{ data: workdayIds }, { data: lunchIds }] = await Promise.all([
+    supabase.rpc('active_workday_analyst_ids'),
+    supabase.rpc('active_lunch_analyst_ids'),
+  ]);
+  activeWorkdayAnalystIds = new Set((workdayIds ?? []).map((row: { analyst_id: string }) => row.analyst_id));
+  activeLunchAnalystIds = new Set((lunchIds ?? []).map((row: { analyst_id: string }) => row.analyst_id));
+  renderOperationalCounters();
+  renderTimeSensitiveSections();
 }
 
 function renderAlmocoSchedule(escalas: EscalaWithAnalysts[]): string {
@@ -194,7 +214,7 @@ function renderMural(notices: Notice[]): void {
 async function loadPublicData(showLoading = true) {
   if (showLoading) loading.classList.remove('hidden');
   try {
-    const { notices, escalas } = await fetchPublicData();
+    const [{ notices, escalas }] = await Promise.all([fetchPublicData(), refreshOperationalCounters()]);
     currentEscalas = escalas;
     renderMural(notices);
 
@@ -240,16 +260,14 @@ function addOneHour(time: string) {
 }
 
 async function refreshMyLunch() {
-  const [{ data }, { data: activeIds }] = await Promise.all([
-    supabase.rpc('get_my_lunch'), supabase.rpc('active_lunch_analyst_ids')
-  ]);
-  activeLunchAnalystIds = new Set((activeIds ?? []).map((row: { analyst_id: string }) => row.analyst_id));
+  const [{ data }] = await Promise.all([supabase.rpc('get_my_lunch'), refreshOperationalCounters()]);
   const lunch = Array.isArray(data) ? data[0] : data;
   const card = $('#myLunchCard');
   const start = lunch?.schedule_start?.slice(0, 5) as string | undefined;
   const end = lunch?.schedule_end?.slice(0, 5) as string | undefined;
   myPlannedLunchStart = start;
   myPlannedLunchEnd = end;
+  $('#myLunchPlanned').textContent = start && end ? `${formatTime(start)} às ${formatTime(end)}` : 'Não definido';
   myActiveLunch = Boolean(lunch?.event_id && !lunch?.returned_at);
   const completed = Boolean(lunch?.returned_at);
   card.classList.toggle('in-progress', myActiveLunch);
@@ -271,8 +289,8 @@ async function refreshMyLunch() {
   } else {
     myLunchCanReturn = false;
     $('#openLunchBtn').removeAttribute('disabled');
-    $('#myLunchStatus').textContent = start && end ? 'Previsto' : 'Ainda não previsto';
-    $('#myLunchTime').textContent = start && end ? `${formatTime(start)} às ${formatTime(end)}` : 'Registre somente quando for sair';
+    $('#myLunchStatus').textContent = 'Almoço não registrado';
+    $('#myLunchTime').textContent = start && end ? 'Você pode sair fora do horário previsto' : 'Registre somente quando for sair';
     $('#openLunchBtn').textContent = 'Registrar almoço';
   }
   renderTimeSensitiveSections();
@@ -324,6 +342,7 @@ async function initAnalystSession(): Promise<boolean> {
   $('#loggedAnalystName').textContent = name;
   $('#loggedAnalystExtension').textContent = analyst?.extension ? `Ramal ${analyst.extension}` : '';
   $('#workdayPanel').classList.remove('hidden');
+  $('#myLunchCard').classList.remove('hidden');
   $('#analystLogout').classList.remove('hidden');
   document.querySelectorAll<HTMLAnchorElement>('a[href="/login.html"]').forEach((link) => link.classList.add('hidden'));
   if (!profile.analyst_id) { $('#myLunchStatus').textContent = 'Perfil sem vínculo'; $('#openLunchBtn').setAttribute('disabled', ''); return true; }
@@ -341,13 +360,13 @@ async function refreshWorkday() {
   const buttons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-work-event]'));
   buttons.forEach((button) => { button.disabled = true; button.classList.remove('completed','active'); });
   events.forEach((event) => document.querySelector<HTMLButtonElement>(`[data-work-event="${event.event_type}"]`)?.classList.add('completed'));
-  let next: WorkEventType | null = 'entry'; let status='Aguardando entrada'; let hint='Registre a entrada quando iniciar o expediente.';
-  if(last?.event_type==='entry'){next='lunch';status='Em expediente';hint='Próxima ação: saída para almoço.';}
+  let next: WorkEventType | null = 'entry'; let status='AGUARDANDO ENTRADA'; let hint='Registre a entrada quando iniciar o expediente.';
+  if(last?.event_type==='entry'){next='lunch';status='EM EXPEDIENTE';hint='Próxima ação: saída para almoço.';}
   if(last?.event_type==='lunch'){
-    const unlock=new Date(new Date(last.occurred_at).getTime()+59*60000); const allowed=Date.now()>=unlock.getTime(); next=allowed?'lunch_return':null; status='Em almoço'; hint=allowed?'O retorno já pode ser registrado.':`Retorno liberado às ${unlock.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}.`;
+    const unlock=new Date(new Date(last.occurred_at).getTime()+59*60000); const allowed=Date.now()>=unlock.getTime(); next=allowed?'lunch_return':null; status='EM ALMOÇO'; hint=allowed?'O retorno já pode ser registrado.':`Retorno liberado às ${unlock.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}.`;
   }
-  if(last?.event_type==='lunch_return'){next='shift_end';status='Em expediente';hint='Próxima ação: fim do expediente.';}
-  if(last?.event_type==='shift_end'){next=null;status='Expediente encerrado';hint='Todos os registros de hoje foram concluídos.';}
+  if(last?.event_type==='lunch_return'){next='shift_end';status='EM EXPEDIENTE';hint='Próxima ação: fim do expediente.';}
+  if(last?.event_type==='shift_end'){next=null;status='EXPEDIENTE ENCERRADO';hint='Todos os registros de hoje foram concluídos.';}
   $('#workdayStatus').textContent=status; $('#workdayHint').textContent=hint;
   if(next){const button=document.querySelector<HTMLButtonElement>(`[data-work-event="${next}"]`);if(button){button.disabled=false;button.classList.add('active');}}
 }
@@ -387,6 +406,7 @@ const realtimeChannel = supabase.channel('public-escalas-live')
   .on('postgres_changes', { event: '*', schema: 'public', table: 'escala_analysts' }, scheduleRefresh)
   .on('postgres_changes', { event: '*', schema: 'public', table: 'analysts' }, scheduleRefresh)
   .on('postgres_changes', { event: '*', schema: 'public', table: 'notices' }, scheduleRefresh)
+  .on('postgres_changes', { event: '*', schema: 'public', table: 'workday_events' }, scheduleRefresh)
   .subscribe();
 
 window.addEventListener('beforeunload', () => {

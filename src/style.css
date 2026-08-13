@@ -272,9 +272,24 @@ a {
 .report-event,.report-kind { display:inline-flex; padding:5px 9px; border-radius:7px; background:var(--bg-light); color:var(--text); font-size:11px; font-weight:700; white-space:nowrap; }
 .report-empty { padding:28px; border:1px solid var(--border); border-radius:12px; background:var(--surface); color:var(--muted); text-align:center; }
 .absence-period { display:block; margin-top:4px; color:var(--muted); font-size:10px; white-space:nowrap; }
-.absence-intro { display:flex; flex-direction:column; gap:3px; margin-bottom:18px; padding:13px 14px; border:1px solid var(--border); border-radius:10px; background:var(--bg-light); }
-.absence-intro strong { color:var(--text); }
-.absence-intro span { color:var(--muted); font-size:12px; }
+.absence-form { min-width:0; }
+.absence-intro { display:flex; align-items:center; gap:12px; margin-bottom:18px; padding:14px; border:1px solid var(--border); border-radius:11px; background:var(--bg-light); }
+.absence-intro > div { display:flex; min-width:0; flex-direction:column; gap:2px; }
+.absence-intro strong { color:var(--text); font-size:14px; }
+.absence-intro > div > span { color:var(--muted); font-size:11px; line-height:1.4; }
+.absence-intro-icon { display:grid; width:34px; height:34px; flex:0 0 34px; place-items:center; border-radius:9px; background:var(--blue); color:#fff; font-size:12px; font-weight:900; }
+.absence-form-section { padding:17px; border:1px solid var(--border); border-radius:11px; background:var(--surface); }
+.absence-form .field { margin:0; }
+.absence-form .field label { min-height:18px; margin-bottom:7px; color:var(--text); font-size:11px; font-weight:800; letter-spacing:.025em; }
+.absence-form .field label b { color:var(--danger); }
+.absence-form .field input,.absence-form .field select { height:44px; min-height:44px; padding:9px 11px; border-radius:8px; }
+.absence-reason-field { margin-bottom:16px !important; }
+.absence-date-grid { display:grid; grid-template-columns:minmax(0,1fr) 24px minmax(0,1fr); align-items:end; gap:8px; }
+.absence-date-arrow { display:grid; height:44px; place-items:center; color:var(--muted); font-size:15px; }
+.absence-date-help { margin:10px 0 0; padding-top:10px; border-top:1px solid var(--border); color:var(--muted); font-size:11px; line-height:1.45; }
+.absence-actions { margin-top:18px; }
+.absence-actions button { min-width:140px; }
+@media(max-width:560px){.absence-date-grid{grid-template-columns:1fr}.absence-date-arrow{display:none}.absence-date-grid .field:last-child{margin-top:12px}.absence-actions{align-items:stretch;flex-direction:column-reverse}.absence-actions button{width:100%}}
 [data-theme='dark'] .report-feedback { border-color:#713d3d; background:#321f24; color:#ffb8b8; }
 [data-theme='dark'] .report-kpis article { background:#151e29; }
 .report-summary strong { color:var(--blue); font-size:22px; margin-left:14px; }.report-summary strong:first-child{margin-left:0}.report-summary span{color:var(--muted);font-size:12px}.report-heading{margin:22px 0 10px;font-size:16px}

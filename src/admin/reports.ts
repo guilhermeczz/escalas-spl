@@ -1,53 +1,110 @@
+import { jsPDF } from 'jspdf';
 import { supabase } from '../supabaseClient';
 import { fetchAnalysts, fetchAllEscalas } from '../data';
-import { escapeHtml, formatDateBR, formatTime } from '../utils';
-import { jsPDF } from 'jspdf';
+import { escapeHtml, formatDateBR, formatTime, KIND_LABEL } from '../utils';
+import type { EscalaKind, EscalaWithAnalysts } from '../types';
 
+type WorkEvent = { analyst_id: string; work_date: string; event_type: string; occurred_at: string; analysts: { name: string } | { name: string }[] | null };
+type LunchEvent = { analyst_id: string; lunch_date: string; started_at: string; expected_return_at: string; returned_at: string | null; analysts: { name: string } | { name: string }[] | null };
+
+const eventLabels: Record<string, string> = { entry: 'Entrada', lunch: 'Almoço', lunch_return: 'Retorno do almoço', shift_end: 'Fim do expediente' };
 const dateValue = (date: Date) => date.toLocaleDateString('sv-SE');
-const dateTime = (value: string | null) => value ? new Date(value).toLocaleString('pt-BR', { dateStyle:'short', timeStyle:'short' }) : '—';
+const dateTime = (value: string | null) => value ? new Date(value).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : '—';
+const analystName = (value: WorkEvent['analysts']) => (Array.isArray(value) ? value[0]?.name : value?.name) ?? '—';
 
-const reportRows = (root: HTMLElement) => Array.from(root.querySelectorAll<HTMLTableRowElement>('#reportResults table tr'))
-  .map((row) => Array.from(row.querySelectorAll<HTMLElement>('th,td')).map((cell) => cell.textContent?.trim() ?? ''));
+function reportTables(root: HTMLElement) {
+  return Array.from(root.querySelectorAll<HTMLTableElement>('#reportResults table')).map((table) => ({
+    title: table.dataset.exportTitle ?? 'Dados',
+    rows: Array.from(table.querySelectorAll<HTMLTableRowElement>('tr')).map((row) =>
+      Array.from(row.querySelectorAll<HTMLElement>('th,td')).map((cell) => cell.textContent?.trim() ?? '')),
+  }));
+}
 
 function exportCsv(root: HTMLElement) {
-  const rows = reportRows(root);
-  if (!rows.length) return;
-  const csv = rows.map((row) => row.map((value) => `"${value.replace(/"/g, '""')}"`).join(';')).join('\r\n');
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8' }));
-  link.download = `relatorio-operacional-${dateValue(new Date())}.csv`;
-  link.click();
-  URL.revokeObjectURL(link.href);
+  const lines = reportTables(root).flatMap(({ title, rows }) => [[title], ...rows, []]);
+  if (!lines.length) return;
+  const csv = lines.map((row) => row.map((value) => `"${value.replace(/"/g, '""')}"`).join(';')).join('\r\n');
+  const url = URL.createObjectURL(new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8' }));
+  const link = Object.assign(document.createElement('a'), { href: url, download: `relatorio-operacional-${dateValue(new Date())}.csv` });
+  link.click(); URL.revokeObjectURL(url);
 }
 
 function exportPdf(root: HTMLElement) {
-  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
-  const margin = 14; let y = 18;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' }); const margin = 14; let y = 18;
   doc.setFont('helvetica', 'bold'); doc.setFontSize(16); doc.text('Relatório operacional', margin, y);
-  y += 8; doc.setFont('helvetica', 'normal'); doc.setFontSize(8);
-  doc.text(`Gerado em ${new Date().toLocaleString('pt-BR')}`, margin, y); y += 8;
-  for (const row of reportRows(root)) {
-    const lines = doc.splitTextToSize(row.join(' | '), 180);
-    if (y + lines.length * 4 > 282) { doc.addPage(); y = 18; }
-    doc.text(lines, margin, y); y += lines.length * 4 + 2;
+  y += 7; doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.text(`Gerado em ${new Date().toLocaleString('pt-BR')}`, margin, y); y += 9;
+  for (const { title, rows } of reportTables(root)) {
+    if (y > 265) { doc.addPage(); y = 18; }
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.text(title, margin, y); y += 6;
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(7);
+    for (const row of rows) {
+      const lines = doc.splitTextToSize(row.join(' | '), 180);
+      if (y + lines.length * 3.5 > 282) { doc.addPage(); y = 18; }
+      doc.text(lines, margin, y); y += lines.length * 3.5 + 1.5;
+    }
+    y += 5;
   }
   doc.save(`relatorio-operacional-${dateValue(new Date())}.pdf`);
 }
 
+function escalaDate(e: EscalaWithAnalysts) { return e.schedule_date || (e.kind === 'plantao' ? e.start_value : null); }
+function escalaPeriod(e: EscalaWithAnalysts) {
+  if (e.kind === 'horario') return `${formatTime(e.start_value ?? '')} às ${formatTime(e.end_value ?? '')}`;
+  if (e.kind === 'plantao') return `${formatDateBR(e.start_value ?? '')} a ${formatDateBR(e.end_value ?? '')}`;
+  return e.analysts.some((a) => a.schedule_start) ? 'Horários individuais' : 'A definir';
+}
+
 export async function initReports(root: HTMLElement) {
-  const analysts = await fetchAnalysts(); const today = new Date(); const monthStart = new Date(today.getFullYear(),today.getMonth(),1);
-  root.innerHTML = `<div class="report-filters"><div class="field"><label>Analista</label><select id="reportAnalyst"><option value="">Todos</option>${analysts.map((a)=>`<option value="${a.id}">${escapeHtml(a.name)}</option>`).join('')}</select></div><div class="field"><label>Data inicial</label><input id="reportFrom" type="date" value="${dateValue(monthStart)}"></div><div class="field"><label>Data final</label><input id="reportTo" type="date" value="${dateValue(today)}"></div><div class="field"><label>Situação do almoço</label><select id="reportStatus"><option value="">Todas</option><option value="active">Em andamento</option><option value="completed">Concluído</option></select></div><button id="applyReport" class="btn-primary">Aplicar filtros</button></div><div class="report-export-actions"><button id="exportReportPdf" class="btn-primary" type="button">Exportar PDF</button><button id="exportReportCsv" class="btn-ghost" type="button">Exportar CSV</button></div><div id="reportResults"></div>`;
+  const analysts = await fetchAnalysts(); const today = new Date(); const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+  root.innerHTML = `
+    <div class="report-toolbar">
+      <div><strong>Consulta operacional</strong><span>Combine os filtros para analisar jornada, almoço e escalas.</span></div>
+      <div class="report-export-actions"><button id="exportReportPdf" class="btn-primary" type="button" disabled>Exportar PDF</button><button id="exportReportCsv" class="btn-ghost" type="button" disabled>Exportar CSV</button></div>
+    </div>
+    <div class="report-filters">
+      <div class="field"><label>Analista</label><select id="reportAnalyst"><option value="">Todos os analistas</option>${analysts.map((a) => `<option value="${a.id}">${escapeHtml(a.name)}</option>`).join('')}</select></div>
+      <div class="field"><label>Data inicial</label><input id="reportFrom" type="date" value="${dateValue(monthStart)}"></div>
+      <div class="field"><label>Data final</label><input id="reportTo" type="date" value="${dateValue(today)}"></div>
+      <div class="field"><label>Evento da jornada</label><select id="reportEvent"><option value="">Todos os eventos</option>${Object.entries(eventLabels).map(([value, label]) => `<option value="${value}">${label}</option>`).join('')}</select></div>
+      <div class="field"><label>Situação do almoço</label><select id="reportStatus"><option value="">Todas</option><option value="active">Em andamento</option><option value="completed">Concluído</option></select></div>
+      <div class="field"><label>Tipo de escala</label><select id="reportKind"><option value="">Todas as escalas</option><option value="horario">URA</option><option value="almoco">Almoço</option><option value="plantao">Plantão</option></select></div>
+      <div class="report-filter-actions"><button id="clearReport" class="btn-ghost" type="button">Limpar</button><button id="applyReport" class="btn-primary" type="button">Aplicar filtros</button></div>
+    </div>
+    <div id="reportFeedback" class="report-feedback hidden"></div><div id="reportResults"></div>`;
+
   const load = async () => {
-    const analystId = root.querySelector<HTMLSelectElement>('#reportAnalyst')!.value; const from = root.querySelector<HTMLInputElement>('#reportFrom')!.value; const to = root.querySelector<HTMLInputElement>('#reportTo')!.value; const status = root.querySelector<HTMLSelectElement>('#reportStatus')!.value; const results = root.querySelector<HTMLElement>('#reportResults')!; results.innerHTML='<div class="list-loading">Gerando relatório...</div>';
-    let query = supabase.from('lunch_events').select('id,analyst_id,lunch_date,started_at,expected_return_at,returned_at,analysts(name)').gte('lunch_date',from).lte('lunch_date',to).order('started_at',{ascending:false}); if(analystId) query=query.eq('analyst_id',analystId); if(status==='active') query=query.is('returned_at',null); if(status==='completed') query=query.not('returned_at','is',null);
-    let workQuery=supabase.from('workday_events').select('analyst_id,work_date,event_type,occurred_at,analysts(name)').gte('work_date',from).lte('work_date',to).order('occurred_at',{ascending:false});if(analystId)workQuery=workQuery.eq('analyst_id',analystId);
-    const [{data:lunches,error},escalas,{data:workEvents,error:workError}] = await Promise.all([query,fetchAllEscalas(),workQuery]); if(error||workError){results.innerHTML=`<div class="empty-inline">${escapeHtml(error?.message??workError?.message??'Erro no relatório')}</div>`;return;}
-    const filteredEscalas=escalas.filter((e)=>{const matchesAnalyst=!analystId||e.analysts.some((a)=>a.id===analystId); const date=e.schedule_date||(e.kind==='plantao'?e.start_value:null); return matchesAnalyst&&(!date||date>=from&&date<=to);});
-    const eventLabels:Record<string,string>={entry:'Entrada',lunch:'Almoço',lunch_return:'Retorno do almoço',shift_end:'Fim do expediente'};
-    results.innerHTML=`<div class="report-summary"><strong>${workEvents?.length??0}</strong><span>eventos de jornada</span><strong>${filteredEscalas.length}</strong><span>escalas no período</span></div><h3 class="report-heading">Jornada de trabalho</h3><div class="table-wrap"><table class="data-table"><thead><tr><th>Analista</th><th>Data</th><th>Evento</th><th>Horário registrado</th></tr></thead><tbody>${(workEvents??[]).map((row:any)=>{const a=Array.isArray(row.analysts)?row.analysts[0]:row.analysts;return`<tr><td>${escapeHtml(a?.name??'—')}</td><td>${formatDateBR(row.work_date)}</td><td>${escapeHtml(eventLabels[row.event_type]??row.event_type)}</td><td>${dateTime(row.occurred_at)}</td></tr>`;}).join('')||'<tr><td colspan="4">Nenhum evento de jornada.</td></tr>'}</tbody></table></div><h3 class="report-heading">Almoços e retornos (histórico anterior)</h3><div class="table-wrap"><table class="data-table"><thead><tr><th>Analista</th><th>Data</th><th>Saída real</th><th>Retorno previsto</th><th>Retorno real</th><th>Situação</th></tr></thead><tbody>${(lunches??[]).map((row:any)=>{const a=Array.isArray(row.analysts)?row.analysts[0]:row.analysts;return`<tr><td>${escapeHtml(a?.name??'—')}</td><td>${formatDateBR(row.lunch_date)}</td><td>${dateTime(row.started_at)}</td><td>${dateTime(row.expected_return_at)}</td><td>${dateTime(row.returned_at)}</td><td><span class="chip chip-${row.returned_at?'ok':'warn'}">${row.returned_at?'Concluído':'Em andamento'}</span></td></tr>`;}).join('')||'<tr><td colspan="6">Nenhum registro.</td></tr>'}</tbody></table></div><h3 class="report-heading">Escalas</h3><div class="table-wrap"><table class="data-table"><thead><tr><th>Tipo</th><th>Escala</th><th>Analistas</th><th>Data/período</th><th>Horário</th></tr></thead><tbody>${filteredEscalas.map((e)=>`<tr><td>${escapeHtml(e.kind.toUpperCase())}</td><td>${escapeHtml(e.title)}</td><td>${escapeHtml(e.analysts.map((a)=>a.name).join(', '))}</td><td>${e.schedule_date?formatDateBR(e.schedule_date):e.kind==='plantao'?`${formatDateBR(e.start_value??'')} a ${formatDateBR(e.end_value??'')}`:'—'}</td><td>${e.kind==='horario'?`${formatTime(e.start_value??'')} às ${formatTime(e.end_value??'')}`:'—'}</td></tr>`).join('')||'<tr><td colspan="5">Nenhuma escala.</td></tr>'}</tbody></table></div>`;
+    const analystId = root.querySelector<HTMLSelectElement>('#reportAnalyst')!.value;
+    const from = root.querySelector<HTMLInputElement>('#reportFrom')!.value; const to = root.querySelector<HTMLInputElement>('#reportTo')!.value;
+    const status = root.querySelector<HTMLSelectElement>('#reportStatus')!.value; const eventType = root.querySelector<HTMLSelectElement>('#reportEvent')!.value;
+    const kind = root.querySelector<HTMLSelectElement>('#reportKind')!.value as EscalaKind | '';
+    const results = root.querySelector<HTMLElement>('#reportResults')!; const feedback = root.querySelector<HTMLElement>('#reportFeedback')!;
+    if (!from || !to || from > to) { feedback.textContent = 'Informe um período válido: a data inicial deve ser anterior à data final.'; feedback.classList.remove('hidden'); return; }
+    feedback.classList.add('hidden'); results.innerHTML = '<div class="list-loading">Gerando relatório...</div>';
+    root.querySelectorAll<HTMLButtonElement>('.report-export-actions button').forEach((button) => { button.disabled = true; });
+
+    let lunchQuery = supabase.from('lunch_events').select('analyst_id,lunch_date,started_at,expected_return_at,returned_at,analysts(name)').gte('lunch_date', from).lte('lunch_date', to).order('started_at', { ascending: false });
+    if (analystId) lunchQuery = lunchQuery.eq('analyst_id', analystId); if (status === 'active') lunchQuery = lunchQuery.is('returned_at', null); if (status === 'completed') lunchQuery = lunchQuery.not('returned_at', 'is', null);
+    let workQuery = supabase.from('workday_events').select('analyst_id,work_date,event_type,occurred_at,analysts(name)').gte('work_date', from).lte('work_date', to).order('occurred_at', { ascending: false });
+    if (analystId) workQuery = workQuery.eq('analyst_id', analystId); if (eventType) workQuery = workQuery.eq('event_type', eventType);
+    const [{ data: lunches, error }, escalas, { data: workEvents, error: workError }] = await Promise.all([lunchQuery, fetchAllEscalas(), workQuery]);
+    if (error || workError) { results.innerHTML = `<div class="report-empty">${escapeHtml(error?.message ?? workError?.message ?? 'Erro ao gerar o relatório.')}</div>`; return; }
+    const lunchRows = (lunches ?? []) as unknown as LunchEvent[]; const workRows = (workEvents ?? []) as unknown as WorkEvent[];
+    const filteredEscalas = escalas.filter((e) => (!analystId || e.analysts.some((a) => a.id === analystId)) && (!kind || e.kind === kind) && (!escalaDate(e) || escalaDate(e)! >= from && escalaDate(e)! <= to));
+    const uniqueAnalysts = new Set([...workRows.map((e) => e.analyst_id), ...lunchRows.map((e) => e.analyst_id), ...filteredEscalas.flatMap((e) => e.analysts.map((a) => a.id))]).size;
+    const activeLunches = lunchRows.filter((e) => !e.returned_at).length;
+    const table = (title: string, count: number, headings: string[], rows: string, empty: string) => `<section class="report-section"><div class="report-heading"><div><h3>${title}</h3><span>${count} registro${count === 1 ? '' : 's'}</span></div></div><div class="table-wrap"><table class="data-table" data-export-title="${title}"><thead><tr>${headings.map((h) => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows || `<tr><td colspan="${headings.length}">${empty}</td></tr>`}</tbody></table></div></section>`;
+    results.innerHTML = `<div class="report-kpis"><article><span>Eventos de jornada</span><strong>${workRows.length}</strong><small>No período selecionado</small></article><article><span>Almoços registrados</span><strong>${lunchRows.length}</strong><small>${activeLunches} em andamento</small></article><article><span>Escalas encontradas</span><strong>${filteredEscalas.length}</strong><small>Conforme os filtros</small></article><article><span>Analistas envolvidos</span><strong>${uniqueAnalysts}</strong><small>Com movimentação</small></article></div>
+      ${table('Jornada de trabalho', workRows.length, ['Analista', 'Data', 'Evento', 'Horário'], workRows.map((row) => `<tr><td><strong>${escapeHtml(analystName(row.analysts))}</strong></td><td>${formatDateBR(row.work_date)}</td><td><span class="report-event">${escapeHtml(eventLabels[row.event_type] ?? row.event_type)}</span></td><td>${dateTime(row.occurred_at)}</td></tr>`).join(''), 'Nenhum evento de jornada encontrado.')}
+      ${table('Almoços e retornos', lunchRows.length, ['Analista', 'Data', 'Saída', 'Retorno previsto', 'Retorno real', 'Situação'], lunchRows.map((row) => `<tr><td><strong>${escapeHtml(analystName(row.analysts))}</strong></td><td>${formatDateBR(row.lunch_date)}</td><td>${dateTime(row.started_at)}</td><td>${dateTime(row.expected_return_at)}</td><td>${dateTime(row.returned_at)}</td><td><span class="chip chip-${row.returned_at ? 'ok' : 'warn'}">${row.returned_at ? 'Concluído' : 'Em andamento'}</span></td></tr>`).join(''), 'Nenhum almoço encontrado.')}
+      ${table('Escalas', filteredEscalas.length, ['Tipo', 'Escala', 'Analistas', 'Data ou período', 'Horário'], filteredEscalas.map((e) => `<tr><td><span class="report-kind">${escapeHtml(KIND_LABEL[e.kind])}</span></td><td><strong>${escapeHtml(e.title)}</strong></td><td>${escapeHtml(e.analysts.map((a) => a.name).join(', ') || '—')}</td><td>${e.schedule_date ? formatDateBR(e.schedule_date) : e.kind === 'plantao' ? `${formatDateBR(e.start_value ?? '')} a ${formatDateBR(e.end_value ?? '')}` : '—'}</td><td>${escalaPeriod(e)}</td></tr>`).join(''), 'Nenhuma escala encontrada.')}`;
+    root.querySelectorAll<HTMLButtonElement>('.report-export-actions button').forEach((button) => { button.disabled = false; });
   };
-  root.querySelector('#applyReport')!.addEventListener('click',load);
-  root.querySelector('#exportReportPdf')!.addEventListener('click',()=>exportPdf(root));
-  root.querySelector('#exportReportCsv')!.addEventListener('click',()=>exportCsv(root));
+
+  root.querySelector('#applyReport')!.addEventListener('click', load);
+  root.querySelector('#clearReport')!.addEventListener('click', () => {
+    root.querySelectorAll<HTMLSelectElement>('.report-filters select').forEach((select) => { select.value = ''; });
+    root.querySelector<HTMLInputElement>('#reportFrom')!.value = dateValue(monthStart); root.querySelector<HTMLInputElement>('#reportTo')!.value = dateValue(today); void load();
+  });
+  root.querySelector('#exportReportPdf')!.addEventListener('click', () => exportPdf(root)); root.querySelector('#exportReportCsv')!.addEventListener('click', () => exportCsv(root));
   await load();
 }

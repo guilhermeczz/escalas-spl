@@ -1,7 +1,6 @@
 import './style.css';
 import { fetchPublicData } from './data';
 import { supabase } from './supabaseClient';
-import { downloadEscalasPdf } from './pdf';
 import { initTheme } from './theme';
 import type { EscalaWithAnalysts, Notice } from './types';
 import {
@@ -365,6 +364,11 @@ function confirmWorkEvent(eventType: WorkEventType) {
 // ---------------------------------------------------------------- init
 startClock();
 initTheme();
+const uraSection = $('#uraSection');
+const almocoSection = $('#almocoSection');
+const plantaoSection = $('#plantaoSection');
+uraSection.after(almocoSection);
+almocoSection.after(plantaoSection);
 initAnalystSession().then((allowed) => {
   if (allowed) loadPublicData();
 });
@@ -373,43 +377,6 @@ $('#refreshBtn').addEventListener('click', () => loadPublicData());
 $('#openLunchBtn').addEventListener('click', openLunchEditor);
 document.querySelectorAll<HTMLButtonElement>('[data-work-event]').forEach((button)=>button.addEventListener('click',()=>confirmWorkEvent(button.dataset.workEvent as WorkEventType)));
 $('#analystLogout').addEventListener('click', async () => { await supabase.auth.signOut(); location.href = '/login.html'; });
-
-function openPdfSelection() {
-  if (!currentEscalas.length) {
-    toast('Não há escalas ativas para exportar.');
-    return;
-  }
-  const overlay = document.createElement('div');
-  overlay.className = 'modal-overlay';
-  overlay.innerHTML = `
-    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="pdfTitle">
-      <div class="modal-head"><h3 id="pdfTitle">Baixar escalas em PDF</h3><button class="modal-close" type="button" aria-label="Fechar">✕</button></div>
-      <div class="modal-body">
-        <p class="pdf-help">Marque uma ou mais escalas para incluir no arquivo.</p>
-        <div class="pdf-scale-list">${currentEscalas.map((escala) => `
-          <label class="check-item pdf-scale-option">
-            <input type="checkbox" value="${escala.id}" />
-            <span><strong>${escapeHtml(escala.title)}</strong><small>${escapeHtml(escala.analysts.map((a) => a.name).join(', ') || 'Sem analistas vinculados')}</small></span>
-          </label>`).join('')}</div>
-        <div class="modal-actions"><button type="button" class="btn-ghost pdf-cancel">Cancelar</button><button type="button" class="btn-primary pdf-download" disabled>Baixar PDF</button></div>
-      </div>
-    </div>`;
-  const close = () => overlay.remove();
-  const download = overlay.querySelector<HTMLButtonElement>('.pdf-download')!;
-  const checks = Array.from(overlay.querySelectorAll<HTMLInputElement>('input[type="checkbox"]'));
-  checks.forEach((check) => check.addEventListener('change', () => { download.disabled = !checks.some((item) => item.checked); }));
-  overlay.querySelector('.modal-close')!.addEventListener('click', close);
-  overlay.querySelector('.pdf-cancel')!.addEventListener('click', close);
-  overlay.addEventListener('click', (event) => { if (event.target === overlay) close(); });
-  download.addEventListener('click', () => {
-    const ids = new Set(checks.filter((item) => item.checked).map((item) => item.value));
-    downloadEscalasPdf(currentEscalas.filter((escala) => ids.has(escala.id)));
-    close();
-  });
-  document.body.appendChild(overlay);
-}
-
-$('#exportPdfBtn').addEventListener('click', openPdfSelection);
 
 const scheduleRefresh = () => {
   if (realtimeDebounce) window.clearTimeout(realtimeDebounce);

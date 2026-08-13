@@ -2951,6 +2951,91 @@ button:disabled,
   }
 }
 
+/* Contraste global de texto e controles por tema. Mantido no fim do arquivo
+   para prevalecer sobre os estilos visuais legados das telas. */
+:root { color-scheme: light; }
+[data-theme='dark'] { color-scheme: dark; }
+
+body,
+.admin-dashboard,
+.admin-dashboard .admin-view,
+.admin-dashboard .admin-list,
+.modal,
+.scale-section,
+.overview-card { color: var(--text); }
+
+.field label,
+.field-heading > label,
+.toolbar h2,
+.dashboard-titlebar h1,
+.admin-dashboard .admin-view-head h2,
+.overview-card h2,
+.quick-actions h2,
+.modal-head h3,
+.report-toolbar strong,
+.report-heading h3 { color: var(--text); }
+
+.toolbar-sub,
+.field small,
+.admin-welcome span,
+.overview-card header small,
+.report-toolbar span,
+.report-kpis span,
+.report-kpis small { color: var(--muted); }
+
+.field input:not([type='checkbox']):not([type='color']),
+.field select,
+.field textarea {
+  background-color: var(--surface);
+  color: var(--text);
+  border-color: var(--border);
+  caret-color: var(--text);
+}
+
+.field select option {
+  background-color: var(--surface);
+  color: var(--text);
+}
+
+.field input::placeholder,
+.field textarea::placeholder { color: var(--muted); opacity: 1; }
+
+.admin-dashboard .btn-ghost,
+.admin-dashboard .btn-secondary {
+  background-color: var(--surface);
+  color: var(--text);
+  border-color: var(--border);
+}
+
+[data-theme='dark'] .admin-dashboard .admin-view,
+[data-theme='dark'] .admin-dashboard .admin-list,
+[data-theme='dark'] .overview-card,
+[data-theme='dark'] .report-toolbar,
+[data-theme='dark'] .report-kpis article,
+[data-theme='dark'] .report-heading,
+[data-theme='dark'] .table-wrap { background-color: var(--surface); }
+
+[data-theme='dark'] .field label,
+[data-theme='dark'] .field-heading > label,
+[data-theme='dark'] .toolbar h2,
+[data-theme='dark'] .dashboard-titlebar h1,
+[data-theme='dark'] .admin-dashboard .admin-view-head h2,
+[data-theme='dark'] .overview-card h2,
+[data-theme='dark'] .quick-actions h2,
+[data-theme='dark'] .modal-head h3,
+[data-theme='dark'] .report-toolbar strong,
+[data-theme='dark'] .report-heading h3,
+[data-theme='dark'] .data-table td,
+[data-theme='dark'] .data-table td strong { color: #f1f6fb; }
+
+[data-theme='dark'] .toolbar-sub,
+[data-theme='dark'] .field small,
+[data-theme='dark'] .admin-welcome span,
+[data-theme='dark'] .overview-card header small,
+[data-theme='dark'] .report-toolbar span,
+[data-theme='dark'] .report-kpis span,
+[data-theme='dark'] .report-kpis small { color: #b8c7d6; }
+
 /* Configuração URA — composição e alinhamento próprios. */
 .ura-config-root {
   display: grid;
@@ -3147,3 +3232,42 @@ button:disabled,
     width: 100%;
   }
 }
+
+/* Garantia final de contraste após todos os estilos específicos. */
+.field label,
+.field-heading > label,
+.toolbar h2,
+.dashboard-titlebar h1,
+.admin-dashboard .admin-view-head h2,
+.overview-card h2,
+.quick-actions h2,
+.modal-head h3 { color: var(--text); }
+
+.toolbar-sub,
+.field small,
+.overview-card header small,
+.admin-welcome span { color: var(--muted); }
+
+.field input:not([type='checkbox']):not([type='color']),
+.field select,
+.field textarea {
+  background: var(--surface);
+  color: var(--text);
+  border-color: var(--border);
+}
+
+.field select option { background: var(--surface); color: var(--text); }
+
+[data-theme='dark'] .field label,
+[data-theme='dark'] .field-heading > label,
+[data-theme='dark'] .toolbar h2,
+[data-theme='dark'] .dashboard-titlebar h1,
+[data-theme='dark'] .admin-dashboard .admin-view-head h2,
+[data-theme='dark'] .overview-card h2,
+[data-theme='dark'] .quick-actions h2,
+[data-theme='dark'] .modal-head h3 { color: #f1f6fb; }
+
+[data-theme='dark'] .toolbar-sub,
+[data-theme='dark'] .field small,
+[data-theme='dark'] .overview-card header small,
+[data-theme='dark'] .admin-welcome span { color: #b8c7d6; }

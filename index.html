@@ -60,22 +60,23 @@
         </div>
       </div>
 
-      <section class="operational-counters no-print" aria-label="Indicadores da equipe">
-        <article class="operational-counter counter-workday"><span class="counter-icon">●</span><div><small>Em expediente</small><strong id="workdayCounterValue">0</strong><span id="workdayCounterText">analistas ativos</span></div></article>
-        <article class="operational-counter counter-lunch"><span class="counter-icon">●</span><div><small>Em almoço</small><strong id="lunchCounterValue">0</strong><span id="lunchCounterText">analistas em pausa</span></div></article>
-      </section>
+      <div class="operational-bar no-print">
+        <section class="operational-counters" aria-label="Indicadores da equipe">
+          <article class="operational-counter counter-workday"><span class="counter-icon">●</span><div><small>Em expediente</small><strong id="workdayCounterValue">0</strong><span id="workdayCounterText">analistas ativos</span></div></article>
+          <article class="operational-counter counter-lunch"><span class="counter-icon">●</span><div><small>Em almoço</small><strong id="lunchCounterValue">0</strong><span id="lunchCounterText">analistas em pausa</span></div></article>
+        </section>
+        <section id="workdayPanel" class="workday-panel hidden">
+          <div class="workday-summary"><span>Minha jornada</span><strong id="workdayStatus">Aguardando entrada</strong><small id="workdayHint">Registre cada etapa no momento em que acontecer.</small></div>
+          <div class="workday-actions">
+            <button class="workday-action" data-work-event="entry"><span>01</span>Entrada</button>
+            <button class="workday-action" data-work-event="lunch"><span>02</span>Almoço</button>
+            <button class="workday-action" data-work-event="lunch_return"><span>03</span>Retorno do almoço</button>
+            <button class="workday-action" data-work-event="shift_end"><span>04</span>Fim do expediente</button>
+          </div>
+        </section>
+      </div>
 
       <section id="mural" class="mural hidden" aria-label="Mural de avisos"></section>
-
-      <section id="workdayPanel" class="workday-panel hidden no-print">
-        <div class="workday-summary"><span>Minha jornada</span><strong id="workdayStatus">Aguardando entrada</strong><small id="workdayHint">Registre cada etapa no momento em que acontecer.</small></div>
-        <div class="workday-actions">
-          <button class="workday-action" data-work-event="entry"><span>01</span>Entrada</button>
-          <button class="workday-action" data-work-event="lunch"><span>02</span>Almoço</button>
-          <button class="workday-action" data-work-event="lunch_return"><span>03</span>Retorno do almoço</button>
-          <button class="workday-action" data-work-event="shift_end"><span>04</span>Fim do expediente</button>
-        </div>
-      </section>
 
       <section id="uraSection" class="scale-section hidden">
         <div class="section-heading">

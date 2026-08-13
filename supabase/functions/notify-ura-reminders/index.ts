@@ -4,7 +4,7 @@ Deno.serve(async(req)=>{
   try{
     const cronSecret=Deno.env.get('CRON_SECRET');
     if(!cronSecret||req.headers.get('x-cron-secret')!==cronSecret)return json({error:'Acesso negado'},401);
-    const webhook=Deno.env.get('SLACK_WEBHOOK_URL'); if(!webhook)return json({configured:false,sent:0});
+    const webhook=Deno.env.get('SLACK_URA_WEBHOOK_URL'); if(!webhook)return json({configured:false,sent:0});
     const lead=Math.max(1,Number(Deno.env.get('URA_REMINDER_MINUTES')??'5'));
     const client=createClient(Deno.env.get('SUPABASE_URL')!,Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
     const now=new Date(); const dateFmt=new Intl.DateTimeFormat('sv-SE',{timeZone:'America/Sao_Paulo'}); const timeFmt=new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit',hour12:false});

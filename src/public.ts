@@ -73,7 +73,7 @@ function uraStatus(analystId: string, startValue: string, endValue: string): { t
   if (minutes < start) return { text: 'AGENDADO', tone: 'muted' };
   if (minutes >= end) return { text: 'CONCLUÍDO', tone: 'ok' };
   const atLunch = activeLunchAnalystIds.has(analystId);
-  return atLunch ? { text: 'EM PAUSA', tone: 'warn' } : { text: 'EM ATENDIMENTO', tone: 'ok' };
+  return atLunch ? { text: 'EM PAUSA', tone: 'warn' } : { text: 'ATIVO', tone: 'ok' };
 }
 
 function renderUra(escala: EscalaWithAnalysts): string {

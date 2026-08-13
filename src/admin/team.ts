@@ -66,9 +66,9 @@ export async function refreshTeam(root: HTMLElement) {
                     <td>${currentAbsence(a.id) ? `<span class="chip chip-${currentAbsence(a.id)!.start_date <= today ? 'warn' : 'muted'}">${currentAbsence(a.id)!.start_date <= today ? 'AUSENTE' : 'PROGRAMADA'} · ${currentAbsence(a.id)!.reason === 'vacation' ? 'Férias' : 'Atestado'}</span><small class="absence-period">${formatDateBR(currentAbsence(a.id)!.start_date)} até ${formatDateBR(currentAbsence(a.id)!.return_date)}</small>` : '<span class="chip chip-ok">ATIVO</span>'}</td>
                     <td>${formatDateTime(a.created_at)}</td>
                     <td class="td-actions">
-                      <button class="btn-mini" data-act="edit" data-id="${a.id}">Editar</button>
-                      ${currentAbsence(a.id) ? `<button class="btn-mini" data-act="end-absence" data-id="${a.id}">${currentAbsence(a.id)!.start_date <= today ? 'Encerrar ausência' : 'Cancelar ausência'}</button>` : `<button class="btn-mini" data-act="absence" data-id="${a.id}">Definir ausência</button>`}
-                      <button class="btn-mini btn-mini-danger" data-act="del" data-id="${a.id}">Excluir</button>
+                      <button class="btn-mini analyst-icon-action" data-act="edit" data-id="${a.id}" title="Editar analista" aria-label="Editar analista"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4ZM13.5 6.5l4 4"/></svg></button>
+                      ${currentAbsence(a.id) ? `<button class="btn-mini analyst-absence-action" data-act="end-absence" data-id="${a.id}">${currentAbsence(a.id)!.start_date <= today ? 'Encerrar ausência' : 'Cancelar ausência'}</button>` : `<button class="btn-mini analyst-absence-action" data-act="absence" data-id="${a.id}">Definir ausência</button>`}
+                      <button class="btn-mini btn-mini-danger analyst-icon-action" data-act="del" data-id="${a.id}" title="Excluir analista" aria-label="Excluir analista"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3m-9 0 1 13h10l1-13M10 11v5m4-5v5"/></svg></button>
                     </td>
                   </tr>
                 `

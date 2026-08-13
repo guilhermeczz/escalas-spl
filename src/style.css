@@ -289,6 +289,12 @@ a {
 .absence-date-help { margin:10px 0 0; padding-top:10px; border-top:1px solid var(--border); color:var(--muted); font-size:11px; line-height:1.45; }
 .absence-actions { margin-top:18px; }
 .absence-actions button { min-width:140px; }
+.analyst-icon-action { width:34px; min-width:34px !important; padding:7px !important; }
+.analyst-icon-action svg { width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+.analyst-absence-action { background:#fff7e6 !important; border-color:#f2bd63 !important; color:#a85b00 !important; }
+.analyst-absence-action:hover { background:#ffedc7 !important; border-color:#df941b !important; color:#814400 !important; }
+[data-theme='dark'] .analyst-absence-action { background:#3a2a15 !important; border-color:#9b6a27 !important; color:#ffc66f !important; }
+[data-theme='dark'] .analyst-absence-action:hover { background:#49351b !important; border-color:#d19135 !important; color:#ffda9c !important; }
 @media(max-width:560px){.absence-date-grid{grid-template-columns:1fr}.absence-date-arrow{display:none}.absence-date-grid .field:last-child{margin-top:12px}.absence-actions{align-items:stretch;flex-direction:column-reverse}.absence-actions button{width:100%}}
 [data-theme='dark'] .report-feedback { border-color:#713d3d; background:#321f24; color:#ffb8b8; }
 [data-theme='dark'] .report-kpis article { background:#151e29; }

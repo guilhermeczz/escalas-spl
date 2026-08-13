@@ -271,6 +271,10 @@ a {
 .report-heading span { padding:4px 9px; border-radius:999px; background:var(--bg-light); color:var(--muted); font-size:11px; font-weight:700; }
 .report-event,.report-kind { display:inline-flex; padding:5px 9px; border-radius:7px; background:var(--bg-light); color:var(--text); font-size:11px; font-weight:700; white-space:nowrap; }
 .report-empty { padding:28px; border:1px solid var(--border); border-radius:12px; background:var(--surface); color:var(--muted); text-align:center; }
+.absence-period { display:block; margin-top:4px; color:var(--muted); font-size:10px; white-space:nowrap; }
+.absence-intro { display:flex; flex-direction:column; gap:3px; margin-bottom:18px; padding:13px 14px; border:1px solid var(--border); border-radius:10px; background:var(--bg-light); }
+.absence-intro strong { color:var(--text); }
+.absence-intro span { color:var(--muted); font-size:12px; }
 [data-theme='dark'] .report-feedback { border-color:#713d3d; background:#321f24; color:#ffb8b8; }
 [data-theme='dark'] .report-kpis article { background:#151e29; }
 .report-summary strong { color:var(--blue); font-size:22px; margin-left:14px; }.report-summary strong:first-child{margin-left:0}.report-summary span{color:var(--muted);font-size:12px}.report-heading{margin:22px 0 10px;font-size:16px}

@@ -40,17 +40,20 @@ function resolveAnalysts(escala: RawEscala): EscalaWithAnalysts {
 }
 
 export async function fetchPublicData(): Promise<{ notices: Notice[]; escalas: EscalaWithAnalysts[] }> {
-  const [noticesRes, escalasRes] = await Promise.all([
+  const [noticesRes, escalasRes, absencesRes] = await Promise.all([
     supabase.from('notices').select('*').eq('active', true).order('created_at', { ascending: false }),
     supabase.from('escalas').select(ESCALA_SELECT).eq('active', true).order('created_at', { ascending: true }),
+    supabase.rpc('active_absent_analyst_ids'),
   ]);
 
   if (noticesRes.error) throw new Error(noticesRes.error.message);
   if (escalasRes.error) throw new Error(escalasRes.error.message);
+  if (absencesRes.error) throw new Error(absencesRes.error.message);
+  const absentIds = new Set((absencesRes.data ?? []).map((row: { analyst_id: string }) => row.analyst_id));
 
   return {
     notices: noticesRes.data ?? [],
-    escalas: ((escalasRes.data ?? []) as unknown as RawEscala[]).map(resolveAnalysts),
+    escalas: ((escalasRes.data ?? []) as unknown as RawEscala[]).map(resolveAnalysts).map((escala) => ({ ...escala, analysts: escala.analysts.filter((analyst) => !absentIds.has(analyst.id)) })),
   };
 }
 

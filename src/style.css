@@ -3399,10 +3399,11 @@ body,
 .request-meta { display:flex; align-items:center; gap:8px 16px; flex-wrap:wrap; margin-top:11px; color:var(--muted); font-size:11px; }
 .request-meta strong { color:var(--text); }
 .request-row-actions { display:grid; grid-template-columns:repeat(2,auto); justify-content:end; gap:7px; min-width:210px; }
-.request-row-actions .btn-detail { grid-column:1/-1; }
 .btn-detail { min-height:38px; padding:8px 15px; border:1px solid var(--blue); border-radius:8px; background:transparent; color:var(--blue); font:700 13px inherit; cursor:pointer; }
 .btn-detail:hover { background:color-mix(in srgb,var(--blue) 8%,var(--surface)); }
 .request-row-actions .btn-review { min-width:96px; padding:7px 12px; }
+.btn-delete-request { min-height:38px; padding:8px 15px; border:1px solid var(--border); border-radius:8px; background:var(--surface); color:var(--danger); font:700 13px inherit; cursor:pointer; transition:.15s ease; }
+.btn-delete-request:hover { border-color:var(--danger); background:color-mix(in srgb,var(--danger) 8%,var(--surface)); }
 .request-detail-overlay { padding:28px; }
 .request-detail-modal { width:min(920px,calc(100vw - 40px)); max-height:calc(100vh - 56px); overflow:auto; border:1px solid var(--border); border-radius:16px; background:var(--surface); box-shadow:0 24px 70px rgba(6,24,44,.35); }
 .request-detail-modal > header { display:flex; align-items:center; justify-content:space-between; gap:20px; padding:20px 24px; border-bottom:1px solid var(--border); }
@@ -3420,5 +3421,6 @@ body,
 .detail-description { min-height:190px; padding:20px; border:1px solid var(--border); border-radius:10px; background:var(--surface); }
 .detail-description p { margin-top:10px; color:var(--text); font-size:15px; line-height:1.7; white-space:pre-wrap; overflow-wrap:anywhere; }
 .detail-review-actions { display:flex; justify-content:flex-end; gap:10px; padding:17px 24px; border-top:1px solid var(--border); background:color-mix(in srgb,var(--bg-light) 55%,var(--surface)); }
+.detail-review-actions > span { flex:1; }
 .detail-review-actions .btn-review { min-width:180px; padding:10px 18px; }
 @media(max-width:760px){.feedback-prompt{right:14px;bottom:14px}.feedback-message{max-width:170px;font-size:12px}}

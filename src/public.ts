@@ -298,10 +298,28 @@ async function initAnalystSession(): Promise<boolean> {
   $('#workdayPanel').classList.remove('hidden');
   $('#myLunchCard').classList.remove('hidden');
   $('#analystLogout').classList.remove('hidden');
+  $('#improvementPrompt').classList.remove('hidden');
   document.querySelectorAll<HTMLAnchorElement>('a[href="/login.html"]').forEach((link) => link.classList.add('hidden'));
   if (!profile.analyst_id) { $('#myLunchStatus').textContent = 'Perfil sem vínculo'; return true; }
   await Promise.all([refreshMyLunch(), refreshWorkday()]);
   return true;
+}
+
+function openImprovementForm() {
+  const root = $('#improvementModalRoot');
+  const overlay = document.createElement('div'); overlay.className = 'modal-overlay';
+  overlay.innerHTML = `<div class="modal improvement-modal" role="dialog" aria-modal="true" aria-labelledby="improvementTitle"><div class="modal-head"><div><h3 id="improvementTitle">Sugerir uma melhoria</h3><p class="toolbar-sub">Compartilhe uma ideia ou relate um problema.</p></div><button class="modal-close" type="button" aria-label="Fechar">✕</button></div><form class="modal-body improvement-form"><div class="field"><label for="requestTitle">Título</label><input id="requestTitle" name="title" maxlength="120" minlength="3" required placeholder="Resuma a solicitação" /></div><div class="field"><label for="requestDescription">Descrição</label><textarea id="requestDescription" name="description" maxlength="2000" minlength="10" rows="5" required placeholder="Explique o contexto e o resultado esperado"></textarea></div><fieldset class="request-category"><legend>Tipo da solicitação</legend><label><input type="radio" name="category" value="process_improvement" required /><span class="improvement-tag tag-process_improvement">Melhoria de processo</span></label><label><input type="radio" name="category" value="new_implementation" required /><span class="improvement-tag tag-new_implementation">Implementação nova</span></label><label><input type="radio" name="category" value="bug" required /><span class="improvement-tag tag-bug">Bug</span></label></fieldset><div class="modal-actions"><button class="btn-mini cancel-request" type="button">Cancelar</button><button class="btn-primary" type="submit">Enviar solicitação</button></div></form></div>`;
+  const close = () => overlay.remove();
+  overlay.querySelector('.modal-close')!.addEventListener('click', close); overlay.querySelector('.cancel-request')!.addEventListener('click', close);
+  overlay.addEventListener('click', (event) => { if (event.target === overlay) close(); });
+  overlay.querySelector<HTMLFormElement>('form')!.addEventListener('submit', async (event) => {
+    event.preventDefault(); const form = event.currentTarget as HTMLFormElement; const values = new FormData(form); const button = form.querySelector<HTMLButtonElement>('button[type="submit"]')!;
+    button.disabled = true; button.textContent = 'Enviando...';
+    const { error } = await supabase.from('improvement_requests').insert({ title: String(values.get('title') ?? '').trim(), description: String(values.get('description') ?? '').trim(), category: values.get('category') });
+    if (error) { button.disabled = false; button.textContent = 'Enviar solicitação'; toast(`Não foi possível enviar: ${error.message}`); return; }
+    close(); toast('Solicitação enviada ao painel administrativo.');
+  });
+  root.appendChild(overlay); overlay.querySelector<HTMLInputElement>('#requestTitle')!.focus();
 }
 
 type WorkEventType = 'entry' | 'lunch' | 'lunch_return' | 'shift_end';
@@ -347,6 +365,7 @@ initAnalystSession().then((allowed) => {
 });
 
 $('#refreshBtn').addEventListener('click', () => loadPublicData());
+$('#improvementBtn').addEventListener('click', openImprovementForm);
 document.querySelectorAll<HTMLButtonElement>('[data-work-event]').forEach((button)=>button.addEventListener('click',()=>confirmWorkEvent(button.dataset.workEvent as WorkEventType)));
 $('#analystLogout').addEventListener('click', async () => { await supabase.auth.signOut(); location.href = '/login.html'; });
 

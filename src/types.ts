@@ -39,6 +39,14 @@ export interface Profile {
   analyst_id: string | null;
 }
 
+export type ImprovementCategory = 'bug' | 'new_implementation' | 'process_improvement';
+
+export interface ImprovementRequest {
+  id: string; title: string; description: string; category: ImprovementCategory;
+  created_at: string; author_id: string;
+  profiles: { name: string | null; email: string } | null;
+}
+
 /** Escala já resolvida com a lista de analistas vinculados. */
 export interface EscalaWithAnalysts extends Escala {
   analysts: ScheduledAnalyst[];

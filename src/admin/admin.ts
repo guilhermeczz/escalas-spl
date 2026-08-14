@@ -10,6 +10,7 @@ import { initTheme } from '../theme';
 import { initUsers, refreshUsers } from './users';
 import { initUraConfig } from './uraConfig';
 import { initReports } from './reports';
+import { initImprovements, refreshImprovements } from './improvements';
 import type { EscalaWithAnalysts } from '../types';
 
 const $ = <T extends HTMLElement>(sel: string): T => {
@@ -104,6 +105,7 @@ function initNav() {
     users: $('#view-users'),
     'ura-config': $('#view-ura-config'),
     reports: $('#view-reports'),
+    improvements: $('#view-improvements'),
   };
 
   tabs.forEach((tab) => {
@@ -175,6 +177,7 @@ function initRealtimeUpdates() {
       }
       if (tables.has('notices')) jobs.push(refreshMural($('#muralList')));
       if (tables.has('profiles')) jobs.push(refreshUsers($('#userList')));
+      if (tables.has('improvement_requests')) jobs.push(refreshImprovements($('#improvementList')));
       await Promise.all(jobs);
     }, 250);
   };
@@ -184,6 +187,7 @@ function initRealtimeUpdates() {
     .on('postgres_changes', { event: '*', schema: 'public', table: 'escala_analysts' }, receiveChange)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'analysts' }, receiveChange)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'notices' }, receiveChange)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'improvement_requests' }, receiveChange)
     .subscribe();
 }
 
@@ -207,6 +211,7 @@ async function boot() {
     initUsers($('#userList')),
     initUraConfig($('#uraConfig')),
     initReports($('#reportsRoot')),
+    initImprovements($('#improvementList')),
   ]);
   initDashboardActions();
   initRealtimeUpdates();

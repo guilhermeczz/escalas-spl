@@ -3310,9 +3310,9 @@ body,
 [data-theme='dark'] .admin-welcome span { color: #b8c7d6; }
 
 /* Sugestões e melhorias do time */
-.feedback-prompt { position:fixed; right:24px; bottom:24px; z-index:900; display:flex; flex-direction:column; align-items:flex-end; gap:7px; }
+.feedback-prompt { position:fixed; right:24px; bottom:24px; z-index:900; display:flex; flex-direction:column; align-items:flex-end; gap:14px; }
 .feedback-message { position:relative; max-width:190px; padding:9px 12px; border:1px solid var(--border); border-radius:10px; background:var(--surface); color:var(--text); box-shadow:var(--shadow-lg); font-size:13px; font-weight:700; text-align:center; }
-.feedback-message span { display:block; height:15px; margin-bottom:-5px; color:var(--blue); font-size:19px; line-height:17px; }
+.feedback-message span { position:absolute; right:16px; bottom:-19px; width:20px; color:var(--blue); font-size:22px; line-height:20px; text-align:center; }
 .feedback-bubble { width:52px; height:52px; display:grid; place-items:center; border:0; border-radius:50%; background:var(--blue); color:#fff; box-shadow:0 7px 22px rgba(30,136,229,.42); cursor:pointer; transition:.18s ease; }
 .feedback-bubble:hover { background:#1976d2; transform:translateY(-2px) scale(1.03); }
 .feedback-bubble svg { width:21px; height:21px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }

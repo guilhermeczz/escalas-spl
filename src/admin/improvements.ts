@@ -18,14 +18,22 @@ function formatDate(value: string): string {
 
 function render(root: HTMLElement): void {
   const counts = (['pending', 'accepted', 'rejected'] as RequestStatus[]).reduce((result, status) => ({ ...result, [status]: requests.filter((item) => item.status === status).length }), {} as Record<RequestStatus, number>);
+  const types = (['bug', 'new_implementation', 'process_improvement'] as ImprovementCategory[]).reduce((result, category) => ({ ...result, [category]: requests.filter((item) => item.category === category).length }), {} as Record<ImprovementCategory, number>);
+  const decided = counts.accepted + counts.rejected;
+  const approvalRate = decided ? Math.round((counts.accepted / decided) * 100) : 0;
   const filtered = requests.filter((item) => item.status === activeStatus);
   root.innerHTML = `<div class="improvement-workspace">
+    <section class="improvement-insights" aria-label="Resumo das solicitações">
+      <div class="insight-main"><span>Visão do time</span><strong>${requests.length}</strong><small>solicitações recebidas</small></div>
+      <div class="insight-metrics"><div><span>Pendentes</span><strong>${counts.pending}</strong><small>aguardando decisão</small></div><div><span>Aceitas</span><strong>${counts.accepted}</strong><small>${approvalRate}% das avaliadas</small></div><div><span>Reprovadas</span><strong>${counts.rejected}</strong><small>${decided} avaliadas no total</small></div></div>
+      <div class="type-summary"><div class="type-summary-head"><strong>Solicitações por tipo</strong><span>${requests.length} no total</span></div><div><span><i class="type-dot bug"></i> Bugs <b>${types.bug}</b></span><span><i class="type-dot implementation"></i> Implementações <b>${types.new_implementation}</b></span><span><i class="type-dot improvement"></i> Melhorias <b>${types.process_improvement}</b></span></div></div>
+    </section>
     <nav class="improvement-tabs" aria-label="Status das solicitações">
       <button class="${activeStatus === 'pending' ? 'active' : ''}" data-request-status="pending"><span>Pendentes</span><b>${counts.pending}</b></button>
       <button class="${activeStatus === 'accepted' ? 'active' : ''}" data-request-status="accepted"><span>Aceitas</span><b>${counts.accepted}</b></button>
       <button class="${activeStatus === 'rejected' ? 'active' : ''}" data-request-status="rejected"><span>Reprovadas</span><b>${counts.rejected}</b></button>
     </nav>
-    <div class="improvement-list">${filtered.length ? filtered.map(cardHtml).join('') : `<div class="improvement-empty"><strong>${emptyLabels[activeStatus]}</strong><span>As solicitações aparecerão aqui conforme forem avaliadas.</span></div>`}</div>
+    <section class="request-table"><header><span>Tipo e status</span><span>Informações da solicitação</span><span>Ações</span></header><div class="improvement-list">${filtered.length ? filtered.map(cardHtml).join('') : `<div class="improvement-empty"><strong>${emptyLabels[activeStatus]}</strong><span>As solicitações aparecerão aqui conforme forem avaliadas.</span></div>`}</div></section>
   </div>`;
   root.querySelectorAll<HTMLButtonElement>('[data-request-status]').forEach((button) => button.addEventListener('click', () => { activeStatus = button.dataset.requestStatus as RequestStatus; render(root); }));
   root.querySelectorAll<HTMLButtonElement>('[data-review]').forEach((button) => button.addEventListener('click', () => void review(button)));

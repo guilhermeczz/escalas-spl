@@ -107,6 +107,10 @@ function initNav() {
     reports: $('#view-reports'),
     improvements: $('#view-improvements'),
   };
+  const titles: Record<string, string> = {
+    dashboard: 'Visão geral', team: 'Equipe', escalas: 'Escalas', mural: 'Comunicados', users: 'Usuários',
+    'ura-config': 'Configuração URA', reports: 'Relatórios', improvements: 'Melhorias do time',
+  };
 
   tabs.forEach((tab) => {
     tab.addEventListener('click', () => {
@@ -114,6 +118,7 @@ function initNav() {
       Object.entries(views).forEach(([name, view]) => {
         view.classList.toggle('hidden', name !== tab.dataset.tab);
       });
+      $('#adminPageTitle').textContent = titles[tab.dataset.tab ?? 'dashboard'] ?? 'Painel administrativo';
     });
   });
 }

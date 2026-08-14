@@ -3363,6 +3363,7 @@ body,
 .improvement-workspace > .improvement-list { display:flex; flex-direction:column; width:100%; gap:11px; }
 .dashboard-main:has(#view-improvements:not(.hidden)) { width:100%; max-width:none; padding-right:28px; padding-left:28px; }
 #view-improvements { overflow:hidden; }
+.improvement-root { display:block; width:100%; min-width:0; }
 .improvement-workspace { width:100%; padding:18px; overflow-x:auto; }
 .improvement-insights { display:grid; grid-template-columns:190px minmax(420px,1fr) minmax(320px,.8fr); gap:0; min-width:980px; overflow:hidden; border:1px solid var(--border); border-radius:11px; background:var(--surface); }
 .insight-main { display:flex; flex-direction:column; justify-content:center; padding:20px 24px; background:linear-gradient(135deg,var(--navy-2),#185d9d); color:#fff; }

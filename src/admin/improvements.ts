@@ -29,13 +29,31 @@ function render(root: HTMLElement): void {
   </div>`;
   root.querySelectorAll<HTMLButtonElement>('[data-request-status]').forEach((button) => button.addEventListener('click', () => { activeStatus = button.dataset.requestStatus as RequestStatus; render(root); }));
   root.querySelectorAll<HTMLButtonElement>('[data-review]').forEach((button) => button.addEventListener('click', () => void review(button)));
+  root.querySelectorAll<HTMLButtonElement>('[data-detail-id]').forEach((button) => button.addEventListener('click', () => openDetail(button.dataset.detailId!)));
 }
 
 function cardHtml(request: ImprovementRequest): string {
   const author = request.profiles?.name?.trim() || request.profiles?.email || 'Analista';
   const reviewed = request.reviewed_at ? `<span class="review-date">Avaliada em ${escapeHtml(formatDate(request.reviewed_at))}</span>` : '';
-  const actions = request.status === 'pending' ? `<div class="improvement-actions"><button class="btn-review reject" data-review="rejected" data-id="${request.id}">Reprovar</button><button class="btn-review accept" data-review="accepted" data-id="${request.id}">Aceitar solicitação</button></div>` : '';
-  return `<article class="improvement-card status-${request.status}"><div class="improvement-card-head"><span class="improvement-tag tag-${request.category}">${labels[request.category]}</span><time datetime="${escapeHtml(request.created_at)}">${escapeHtml(formatDate(request.created_at))}</time></div><h3>${escapeHtml(request.title)}</h3><p>${escapeHtml(request.description)}</p><footer><span>Solicitado por <strong>${escapeHtml(author)}</strong></span>${reviewed}</footer>${actions}</article>`;
+  const statusLabel = request.status === 'pending' ? 'Aguardando análise' : request.status === 'accepted' ? 'Aceita' : 'Reprovada';
+  const actions = request.status === 'pending' ? `<button class="btn-review reject" data-review="rejected" data-id="${request.id}">Reprovar</button><button class="btn-review accept" data-review="accepted" data-id="${request.id}">Aceitar</button>` : '';
+  return `<article class="improvement-card improvement-row status-${request.status}">
+    <div class="request-kind"><span class="improvement-tag tag-${request.category}">${labels[request.category]}</span><small class="request-status-label">${statusLabel}</small></div>
+    <div class="request-summary"><h3>${escapeHtml(request.title)}</h3><p>${escapeHtml(request.description)}</p><div class="request-meta"><span>Por <strong>${escapeHtml(author)}</strong></span><time datetime="${escapeHtml(request.created_at)}">${escapeHtml(formatDate(request.created_at))}</time>${reviewed}</div></div>
+    <div class="request-row-actions"><button class="btn-detail" data-detail-id="${request.id}">Ver detalhes</button>${actions}</div>
+  </article>`;
+}
+
+function openDetail(id: string): void {
+  const request = requests.find((item) => item.id === id); if (!request) return;
+  const author = request.profiles?.name?.trim() || request.profiles?.email || 'Analista';
+  const statusLabel = request.status === 'pending' ? 'Aguardando análise' : request.status === 'accepted' ? 'Aceita' : 'Reprovada';
+  const actions = request.status === 'pending' ? `<div class="detail-review-actions"><button class="btn-review reject" data-review="rejected" data-id="${request.id}">Reprovar solicitação</button><button class="btn-review accept" data-review="accepted" data-id="${request.id}">Aceitar solicitação</button></div>` : '';
+  const overlay = document.createElement('div'); overlay.className = 'modal-overlay request-detail-overlay';
+  overlay.innerHTML = `<section class="request-detail-modal" role="dialog" aria-modal="true" aria-labelledby="detail-title"><header><div><span class="improvement-tag tag-${request.category}">${labels[request.category]}</span><span class="detail-status status-${request.status}">${statusLabel}</span></div><button class="modal-close" type="button" aria-label="Fechar">✕</button></header><div class="request-detail-content"><p class="detail-eyebrow">Detalhes da solicitação</p><h2 id="detail-title">${escapeHtml(request.title)}</h2><div class="detail-metadata"><div><small>Solicitado por</small><strong>${escapeHtml(author)}</strong></div><div><small>Enviado em</small><strong>${escapeHtml(formatDate(request.created_at))}</strong></div>${request.reviewed_at ? `<div><small>Avaliado em</small><strong>${escapeHtml(formatDate(request.reviewed_at))}</strong></div>` : ''}</div><div class="detail-description"><small>Descrição completa</small><p>${escapeHtml(request.description)}</p></div></div>${actions}</section>`;
+  const close = () => overlay.remove(); overlay.querySelector('.modal-close')!.addEventListener('click', close); overlay.addEventListener('click', (event) => { if (event.target === overlay) close(); });
+  overlay.querySelectorAll<HTMLButtonElement>('[data-review]').forEach((button) => button.addEventListener('click', () => void review(button)));
+  document.body.appendChild(overlay);
 }
 
 async function review(button: HTMLButtonElement): Promise<void> {
@@ -47,6 +65,7 @@ async function review(button: HTMLButtonElement): Promise<void> {
   const { error } = await supabase.from('improvement_requests').update({ status, reviewed_at: new Date().toISOString(), reviewed_by: auth.session?.user.id }).eq('id', id);
   if (error) { card?.querySelectorAll<HTMLButtonElement>('button').forEach((item) => { item.disabled = false; }); toast(error.message, 'error'); return; }
   const item = requests.find((request) => request.id === id); if (item) { item.status = status; item.reviewed_at = new Date().toISOString(); }
+  button.closest('.modal-overlay')?.remove();
   if (currentRoot) render(currentRoot);
   toast(status === 'accepted' ? 'Solicitação aceita.' : 'Solicitação reprovada.');
 }

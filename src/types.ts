@@ -44,6 +44,8 @@ export type ImprovementCategory = 'bug' | 'new_implementation' | 'process_improv
 export interface ImprovementRequest {
   id: string; title: string; description: string; category: ImprovementCategory;
   created_at: string; author_id: string;
+  status: 'pending' | 'accepted' | 'rejected';
+  reviewed_at: string | null; reviewed_by: string | null;
   profiles: { name: string | null; email: string } | null;
 }
 

@@ -161,7 +161,7 @@ export async function initAnalystProfile(context: AnalystProfileContext, toast: 
       <form class="modal-body profile-form">
         <section class="profile-personal-card">
           <div class="profile-photo-column">
-            <div class="profile-photo-preview"><span>${initials(context.name)}</span><img class="${avatarUrl ? '' : 'hidden'}" src="${avatarUrl ?? ''}" alt="Foto de ${escapeHtml(context.name)}" /></div>
+            <div class="profile-photo-preview"><span class="${avatarUrl ? 'hidden' : ''}">${initials(context.name)}</span><img class="${avatarUrl ? '' : 'hidden'}" src="${avatarUrl ?? ''}" alt="Foto de ${escapeHtml(context.name)}" /></div>
             <input id="profilePhotoInput" class="hidden" type="file" accept="image/png,image/jpeg,.png,.jpg,.jpeg" />
             <div class="profile-photo-actions"><button class="btn-mini" data-photo-action="upload" type="button">${avatarUrl ? 'Trocar foto' : 'Enviar foto'}</button><button class="btn-mini ${avatarUrl ? '' : 'hidden'}" data-photo-action="edit" type="button">Enquadrar</button><button class="btn-mini btn-mini-danger ${avatarUrl ? '' : 'hidden'}" data-photo-action="remove" type="button">Excluir</button></div>
             <small>PNG ou JPEG · até 30 MB · compressão automática</small>

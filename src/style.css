@@ -3682,3 +3682,111 @@ details[open] > summary .section-arrow { transform: rotate(90deg); }
   .escala-section-content > .escala-cards { padding: 8px; }
   .ura-owner-branch .ura-config-footer { align-items: stretch; flex-direction: column; gap: 10px; }
 }
+
+/* Autoridade final das paletas: remove azuis fixos das camadas visuais antigas. */
+[data-palette] .public-body,
+[data-palette] .admin-dashboard { background: var(--bg-light); }
+
+[data-palette] .public-body .site-header,
+[data-palette] .dashboard-sidebar,
+[data-palette] .admin-nav { background: var(--navy); border-color: color-mix(in srgb, var(--navy) 78%, #000); }
+
+[data-palette] .brand-badge,
+[data-palette] .public-body .brand-badge,
+[data-palette] .auth-logo .brand-badge,
+[data-palette] .admin-dashboard .btn-primary,
+[data-palette] .btn-primary,
+[data-palette] .card-marker:not(.red):not(.amber):not(.slate),
+[data-palette] .workday-action.active,
+[data-palette] .feedback-bubble,
+[data-palette] .analyst-select:checked,
+[data-palette] .pdf-scale-option input[type='checkbox']:checked {
+  background: var(--blue);
+  border-color: var(--blue);
+}
+
+[data-palette] .admin-dashboard .btn-primary:hover,
+[data-palette] .btn-primary:hover,
+[data-palette] .feedback-bubble:hover {
+  background: color-mix(in srgb, var(--blue) 84%, #000);
+}
+
+[data-palette] .btn-primary,
+[data-palette] .feedback-bubble,
+[data-palette] .workday-action.active {
+  color: #fff;
+  box-shadow: 0 3px 10px color-mix(in srgb, var(--blue) 30%, transparent);
+}
+
+[data-palette] .public-body .mural {
+  background: var(--surface);
+  border-color: var(--border);
+  border-left-color: var(--blue);
+}
+
+[data-palette] .public-body .mural-icon svg { stroke: var(--blue); }
+[data-palette] .public-body .section-icon,
+[data-palette] .access-option-icon,
+[data-palette] .ura-avatar-stack .ura-more {
+  background: color-mix(in srgb, var(--blue) 13%, var(--surface));
+  color: color-mix(in srgb, var(--blue) 82%, var(--text));
+}
+
+[data-palette] .lunch-status,
+[data-palette] .my-lunch-card,
+[data-palette] .request-category label:hover,
+[data-palette] .request-category label:has(input:checked),
+[data-palette] .tag-new_implementation {
+  background: color-mix(in srgb, var(--blue) 9%, var(--surface));
+  border-color: color-mix(in srgb, var(--blue) 28%, var(--border));
+  color: color-mix(in srgb, var(--blue) 76%, var(--text));
+}
+
+[data-palette] .my-lunch-card strong,
+[data-palette] .analyst-identity span,
+[data-palette] .overview-icon,
+[data-palette] .notice-preview strong,
+[data-palette] .eyebrow,
+[data-palette] .mural-label,
+[data-palette] .type-dot.implementation { color: var(--blue); }
+
+[data-palette] .type-dot.implementation { background: var(--blue); }
+[data-palette] .insight-main { background: linear-gradient(135deg, var(--navy-2), var(--blue)); }
+[data-palette] .improvement-tabs button.active { background: var(--navy-2); }
+
+[data-palette] .field input:focus,
+[data-palette] .field select:focus,
+[data-palette] .field textarea:focus,
+[data-palette] input:focus,
+[data-palette] select:focus,
+[data-palette] textarea:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--blue) 18%, transparent);
+}
+
+[data-palette] .analyst-schedule-row.selected,
+[data-palette] .palette-option.selected,
+[data-palette] .request-category label:has(input:checked) {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--blue) 15%, transparent);
+}
+
+[data-palette] .analyst-select:checked,
+[data-palette] .pdf-scale-option input[type='checkbox']:checked {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--blue) 16%, transparent);
+}
+
+[data-palette] .category-radio,
+[data-palette] .request-category label:has(input:checked) .category-radio { border-color: var(--blue); }
+[data-palette] .request-category label:has(input:checked) .category-radio { background: var(--blue); }
+
+[data-palette] .auth-body {
+  background: radial-gradient(1000px 500px at 85% -10%, color-mix(in srgb, var(--blue) 25%, transparent), transparent), linear-gradient(135deg, var(--navy), var(--navy-2));
+}
+
+[data-palette] .spinner { border-color: color-mix(in srgb, var(--blue) 18%, var(--border)); border-top-color: var(--blue); }
+
+/* No cabeçalho escuro, identidade e ações permanecem legíveis em todas as paletas. */
+[data-palette] .public-body .site-header .analyst-identity span,
+[data-palette] .public-body .site-header .analyst-identity strong,
+[data-palette] .public-body .site-header .analyst-identity small { color: rgba(255,255,255,.82); }

@@ -1,8 +1,9 @@
 import { supabase } from '../supabaseClient';
 import { fetchAnalysts } from '../data';
 import type { Analyst } from '../types';
-import { escapeHtml, initials } from '../utils';
+import { escapeHtml } from '../utils';
 import { errMessage, toast } from './ui';
+import { analystAvatar, loadAnalystAvatars } from './analystAvatars';
 
 interface TemplateRow {
   plantonista_id: string;
@@ -18,7 +19,7 @@ function participantRows(analysts: Analyst[], configured: Map<string, TemplateRo
     return `<div class="analyst-schedule-row ${slot ? 'selected show-individual-time' : ''}" data-row="${analyst.id}">
       <label class="analyst-choice">
         <input type="checkbox" ${slot ? 'checked' : ''} />
-        <span class="avatar avatar-xs" style="background:${analyst.color}">${initials(analyst.name)}</span>
+        ${analystAvatar(analyst, 'avatar-xs')}
         <span><strong>${escapeHtml(analyst.name)}</strong><small>${escapeHtml(analyst.extension ? `Ramal ${analyst.extension}` : analyst.role ?? 'Analista')}</small></span>
       </label>
       <div class="individual-time-fields">
@@ -36,7 +37,7 @@ function ownerBranch(owner: Analyst, analysts: Analyst[], templates: TemplateRow
   return `<details class="ura-owner-branch" data-owner="${owner.id}">
     <summary>
       <span class="section-arrow" aria-hidden="true">›</span>
-      <span class="avatar" style="background:${owner.color}">${initials(owner.name)}</span>
+      ${analystAvatar(owner)}
       <span class="ura-owner-heading"><strong>${escapeHtml(owner.name)}</strong><small>Quando estiver de plantão</small></span>
       <span class="section-count">${weekday.length} ${weekday.length === 1 ? 'pessoa' : 'pessoas'} na URA</span>
     </summary>
@@ -110,6 +111,7 @@ export async function initUraConfig(root: HTMLElement) {
     const [analysts, templateResult] = await Promise.all([
       fetchAnalysts(),
       supabase.from('ura_template_slots').select('plantonista_id,analyst_id,start_time,end_time,day_type'),
+      loadAnalystAvatars(),
     ]);
     if (templateResult.error) throw templateResult.error;
     const templates = (templateResult.data ?? []) as TemplateRow[];

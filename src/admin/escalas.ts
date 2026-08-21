@@ -1,8 +1,9 @@
 import { supabase } from '../supabaseClient';
 import { fetchAllEscalas, fetchAnalysts, isArchivedPlantao } from '../data';
 import type { EscalaWithAnalysts, EscalaKind } from '../types';
-import { escapeHtml, initials, formatTime, formatDateBR, KIND_LABEL } from '../utils';
+import { escapeHtml, formatTime, formatDateBR, KIND_LABEL } from '../utils';
 import { openModal, confirmDialog, toast, errMessage } from './ui';
+import { analystAvatar, loadAnalystAvatars } from './analystAvatars';
 
 export async function initEscalas(root: HTMLElement) {
   await refreshEscalas(root);
@@ -35,7 +36,7 @@ function escalaCard(e: EscalaWithAnalysts): string {
           <h4>${escapeHtml(e.title)} ${e.active ? '' : '<span class="badge-off">inativa</span>'}</h4>
           <p>${describe(e)}</p>
           <div class="escala-analysts">
-            ${e.analysts.map((a) => `<span class="mini-user"><span class="avatar avatar-xs" style="background:${a.color}">${initials(a.name)}</span>${escapeHtml(a.name)}</span>`).join('') || '<span class="muted">Sem analistas vinculados</span>'}
+            ${e.analysts.map((a) => `<span class="mini-user">${analystAvatar(a, 'avatar-xs')}${escapeHtml(a.name)}</span>`).join('') || '<span class="muted">Sem analistas vinculados</span>'}
           </div>
         </div>
       </div>
@@ -70,7 +71,7 @@ function automaticUraCards(generated: EscalaWithAnalysts[], all: EscalaWithAnaly
         <div class="escala-info">
           <h4>URA automática · ${escapeHtml(owner)}</h4>
           <p><strong>${period}</strong> · ${slots.size} faixa(s) de horário · ${people.size} participante(s) · ${allActive ? 'cobertura ativa' : 'há horários inativos'}</p>
-          <div class="escala-analysts">${Array.from(people.values()).map((person) => `<span class="mini-user"><span class="avatar avatar-xs" style="background:${person.color}">${initials(person.name)}</span>${escapeHtml(person.name)}</span>`).join('')}</div>
+          <div class="escala-analysts">${Array.from(people.values()).map((person) => `<span class="mini-user">${analystAvatar(person, 'avatar-xs')}${escapeHtml(person.name)}</span>`).join('')}</div>
         </div>
       </div>
       <button class="btn-mini" data-open-ura-config>Configurar por plantonista</button>
@@ -98,7 +99,8 @@ export async function refreshEscalas(root: HTMLElement) {
   const hadSections = Boolean(root.querySelector('[data-escala-section]'));
   root.innerHTML = `<div class="list-loading">Carregando escalas...</div>`;
   try {
-    const escalas = (await fetchAllEscalas()).sort((a, b) => {
+    const [allEscalas] = await Promise.all([fetchAllEscalas(), loadAnalystAvatars()]);
+    const escalas = allEscalas.sort((a, b) => {
       if (a.kind === 'plantao' && b.kind === 'plantao') {
         return (a.start_value ?? '9999-12-31').localeCompare(b.start_value ?? '9999-12-31');
       }
@@ -202,7 +204,7 @@ function analystSelector(analysts: Awaited<ReturnType<typeof fetchAnalysts>>, es
       <div class="analyst-schedule-row ${selected ? 'selected' : ''}" data-analyst-row="${analyst.id}">
         <label class="analyst-choice">
           <input class="analyst-select" type="checkbox" value="${analyst.id}" ${selected ? 'checked' : ''} />
-          <span class="avatar avatar-xs" style="background:${analyst.color}">${initials(analyst.name)}</span>
+          ${analystAvatar(analyst, 'avatar-xs')}
           <span><strong>${escapeHtml(analyst.name)}</strong><small>${escapeHtml(analyst.role ?? 'Analista')}</small></span>
         </label>
         <div class="individual-time-fields">
@@ -217,7 +219,7 @@ function analystSelector(analysts: Awaited<ReturnType<typeof fetchAnalysts>>, es
 async function escalaModal(root: HTMLElement, escala?: EscalaWithAnalysts, preferredKind: EscalaKind = 'horario') {
   const isEdit = Boolean(escala);
   const initialKind = escala?.kind ?? preferredKind;
-  const analysts = await fetchAnalysts();
+  const [analysts] = await Promise.all([fetchAnalysts(), loadAnalystAvatars()]);
   const selectedIds = new Set((escala?.analysts ?? []).map((a) => a.id));
 
   openModal(

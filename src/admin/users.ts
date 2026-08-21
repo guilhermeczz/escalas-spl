@@ -2,15 +2,27 @@ import { supabase } from '../supabaseClient';
 import { fetchAnalysts } from '../data';
 import { escapeHtml } from '../utils';
 import { openModal, closeModal, confirmDialog, toast, errMessage } from './ui';
+import { analystAvatar, loadAnalystAvatars } from './analystAvatars';
 
-interface LoginProfile { id: string; name: string | null; email: string; analysts: { name: string; extension: string | null } | { name: string; extension: string | null }[] | null }
+interface LoginProfile { id: string; name: string | null; email: string; analysts: { id: string; name: string; extension: string | null; color: string } | { id: string; name: string; extension: string | null; color: string }[] | null }
 export async function initUsers(root: HTMLElement) { await refreshUsers(root); document.getElementById('newUserBtn')!.addEventListener('click', () => userModal(root)); }
 export async function refreshUsers(root: HTMLElement) {
   root.innerHTML = '<div class="list-loading">Carregando usuários...</div>';
-  const { data, error } = await supabase.from('profiles').select('id,name,email,analysts(name,extension)').eq('role', 'user').order('name');
+  const [{ data, error }] = await Promise.all([
+    supabase.from('profiles').select('id,name,email,analysts(id,name,extension,color)').eq('role', 'user').order('name'),
+    loadAnalystAvatars(),
+  ]);
   if (error) { root.innerHTML = `<div class="empty-inline">${escapeHtml(error.message)}</div>`; return; }
   const users = (data ?? []) as unknown as LoginProfile[];
   root.innerHTML = users.length ? `<div class="table-wrap"><table class="data-table"><thead><tr><th>Nome</th><th>Username</th><th>Analista vinculado</th><th>Ramal</th><th>Ações</th></tr></thead><tbody>${users.map((user) => { const analyst = Array.isArray(user.analysts) ? user.analysts[0] : user.analysts; return `<tr><td>${escapeHtml(user.name ?? '—')}</td><td><strong>${escapeHtml(user.email.split('@')[0])}</strong></td><td>${escapeHtml(analyst?.name ?? 'Sem vínculo')}</td><td>${escapeHtml(analyst?.extension ?? '—')}</td><td><div class="td-actions"><button class="btn-mini" data-password="${user.id}">Alterar senha</button><button class="btn-mini btn-mini-danger" data-delete="${user.id}">Excluir</button></div></td></tr>`; }).join('')}</tbody></table></div>` : '<div class="empty-inline">Nenhum login de analista criado.</div>';
+  root.querySelectorAll<HTMLTableRowElement>('tbody tr').forEach((row, index) => {
+    const analyst = Array.isArray(users[index].analysts) ? users[index].analysts[0] : users[index].analysts;
+    const nameCell = row.cells[0];
+    if (analyst && nameCell) {
+      nameCell.classList.add('cell-user');
+      nameCell.insertAdjacentHTML('afterbegin', analystAvatar(analyst));
+    }
+  });
   root.querySelectorAll<HTMLButtonElement>('[data-password]').forEach((button) => button.addEventListener('click', () => passwordModal(root, users.find((user) => user.id === button.dataset.password)!)));
   root.querySelectorAll<HTMLButtonElement>('[data-delete]').forEach((button) => button.addEventListener('click', () => { const user = users.find((item) => item.id === button.dataset.delete)!; confirmDialog('Excluir login', `Excluir definitivamente o login <strong>${escapeHtml(user.email.split('@')[0])}</strong>? O cadastro do analista e suas escalas serão mantidos.`, async () => { const { data, error } = await supabase.functions.invoke('manage-analyst-user', { body: { action: 'delete', userId: user.id } }); if (error || data?.error) throw new Error(data?.error ?? errMessage(error)); toast('Login excluído.'); await refreshUsers(root); }); }));
 }

@@ -3,6 +3,7 @@ import { supabase } from '../supabaseClient';
 import { fetchAnalysts } from '../data';
 import { escapeHtml, formatDateTime, initials } from '../utils';
 import { errMessage, toast } from './ui';
+import { analystAvatar, loadAnalystAvatars } from './analystAvatars';
 
 const MEDIA_BUCKET = 'recognition-media';
 const MAX_MEDIA_SIZE = 30 * 1024 * 1024;
@@ -17,7 +18,7 @@ type RecognitionRow = {
   created_at: string;
   slack_sent_at: string | null;
   slack_error: string | null;
-  analysts: { name: string; color: string } | Array<{ name: string; color: string }> | null;
+  analysts: { id: string; name: string; color: string } | Array<{ id: string; name: string; color: string }> | null;
 };
 
 function fileExtension(type: string): string {
@@ -32,18 +33,18 @@ function fileExtension(type: string): string {
 export async function refreshRecognitionHistory(root: HTMLElement) {
   const history = root.querySelector<HTMLElement>('#recognitionHistory');
   if (!history) return;
-  const { data, error } = await supabase
+  const [{ data, error }] = await Promise.all([supabase
     .from('recognition_posts')
-    .select('id,title,message,media_type,created_at,slack_sent_at,slack_error,analysts(name,color)')
+    .select('id,title,message,media_type,created_at,slack_sent_at,slack_error,analysts(id,name,color)')
     .order('created_at', { ascending: false })
-    .limit(30);
+    .limit(30), loadAnalystAvatars()]);
   if (error) { history.innerHTML = `<div class="empty-inline">${escapeHtml(error.message)}</div>`; return; }
   const rows = (data ?? []) as unknown as RecognitionRow[];
   history.innerHTML = rows.map((row) => {
     const analyst = Array.isArray(row.analysts) ? row.analysts[0] : row.analysts;
     const name = analyst?.name ?? 'Analista';
     return `<article class="recognition-history-row">
-      <span class="avatar avatar-xs" style="background:${analyst?.color ?? '#64748b'}">${initials(name)}</span>
+      ${analyst ? analystAvatar(analyst, 'avatar-xs') : `<span class="avatar avatar-xs" style="background:#64748b">${initials(name)}</span>`}
       <div><strong>${escapeHtml(name)}</strong><span>${escapeHtml(row.title)}</span><small>${formatDateTime(row.created_at)}${row.media_type ? ` · ${row.media_type.startsWith('audio/') ? 'Áudio' : 'Imagem'}` : ''}</small>${row.slack_error && !row.slack_sent_at ? `<em>${escapeHtml(row.slack_error)}</em>` : ''}</div>
       <span class="chip chip-${row.slack_sent_at ? 'ok' : 'warn'}">${row.slack_sent_at ? 'Publicado' : 'Pendente'}</span>
       ${row.slack_sent_at ? '' : `<button class="btn-mini" data-retry-recognition="${row.id}" type="button">Reenviar</button>`}

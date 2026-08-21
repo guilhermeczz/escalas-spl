@@ -13,6 +13,7 @@ import { initReports } from './reports';
 import { initImprovements, refreshImprovements } from './improvements';
 import { initRecognitions, refreshRecognitionHistory } from './recognitions';
 import type { EscalaWithAnalysts } from '../types';
+import { invalidateAnalystAvatars } from './analystAvatars';
 
 const $ = <T extends HTMLElement>(sel: string): T => {
   const el = document.querySelector<T>(sel);
@@ -183,7 +184,10 @@ function initRealtimeUpdates() {
         jobs.push(refreshEscalas($('#escalaList')));
       }
       if (tables.has('notices')) jobs.push(refreshMural($('#muralList')));
-      if (tables.has('profiles')) jobs.push(refreshUsers($('#userList')));
+      if (tables.has('profiles')) {
+        invalidateAnalystAvatars();
+        jobs.push(refreshUsers($('#userList')), refreshTeam($('#teamList')), refreshEscalas($('#escalaList')), initUraConfig($('#uraConfig')), refreshRecognitionHistory($('#recognitionsRoot')));
+      }
       if (tables.has('improvement_requests')) jobs.push(refreshImprovements($('#improvementList')));
       if (tables.has('recognition_posts')) jobs.push(refreshRecognitionHistory($('#recognitionsRoot')));
       await Promise.all(jobs);
@@ -197,6 +201,7 @@ function initRealtimeUpdates() {
     .on('postgres_changes', { event: '*', schema: 'public', table: 'notices' }, receiveChange)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'improvement_requests' }, receiveChange)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'recognition_posts' }, receiveChange)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, receiveChange)
     .subscribe();
 }
 

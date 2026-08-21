@@ -1,8 +1,9 @@
 import { supabase } from '../supabaseClient';
 import { fetchAnalysts } from '../data';
 import type { Analyst } from '../types';
-import { escapeHtml, initials, formatDateTime, formatDateBR } from '../utils';
+import { escapeHtml, formatDateTime, formatDateBR } from '../utils';
 import { openModal, confirmDialog, toast, errMessage } from './ui';
+import { analystAvatar, loadAnalystAvatars } from './analystAvatars';
 
 const COLORS = [
   '#2563eb', // azul
@@ -23,8 +24,12 @@ export async function initTeam(root: HTMLElement) {
 export async function refreshTeam(root: HTMLElement) {
   root.innerHTML = `<div class="list-loading">Carregando equipe...</div>`;
   try {
-    const analysts = await fetchAnalysts();
-    const { data: absenceData, error: absenceError } = await supabase.from('analyst_absences').select('*').is('ended_at', null).order('start_date', { ascending: false });
+    const [analysts, absenceResult] = await Promise.all([
+      fetchAnalysts(),
+      supabase.from('analyst_absences').select('*').is('ended_at', null).order('start_date', { ascending: false }),
+      loadAnalystAvatars(),
+    ]);
+    const { data: absenceData, error: absenceError } = absenceResult;
     if (absenceError) throw new Error(absenceError.message);
     const absences = (absenceData ?? []) as { id:string; analyst_id:string; reason:'vacation'|'medical_leave'; start_date:string; return_date:string; ended_at:string|null }[];
     const today = new Date().toLocaleDateString('sv-SE');
@@ -55,7 +60,7 @@ export async function refreshTeam(root: HTMLElement) {
                   <tr>
                     <td>
                       <div class="cell-user">
-                        <span class="avatar" style="background:${a.color}">${initials(a.name)}</span>
+                        ${analystAvatar(a)}
                         <span>${escapeHtml(a.name)}</span>
                       </div>
                     </td>

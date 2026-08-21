@@ -19,6 +19,7 @@ export interface Escala {
   end_value: string | null;
   note: string | null;
   schedule_date?: string | null;
+  generated_from_plantao?: string | null;
   active: boolean;
   created_at: string;
   escala_analysts?: { analyst_id: Analyst | null }[];

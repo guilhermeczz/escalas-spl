@@ -2,7 +2,7 @@ import { supabase } from './supabaseClient';
 import type { Analyst, EscalaKind, EscalaWithAnalysts, Notice } from './types';
 
 export const ESCALA_SELECT =
-  'id, kind, title, start_value, end_value, note, schedule_date, active, created_at, escala_analysts(schedule_start, schedule_end, schedule_note, analyst_id(*))';
+  'id, kind, title, start_value, end_value, note, schedule_date, generated_from_plantao, active, created_at, escala_analysts(schedule_start, schedule_end, schedule_note, analyst_id(*))';
 
 interface RawEscalaLink {
   analyst_id: Analyst | Analyst[] | null;
@@ -19,6 +19,7 @@ interface RawEscala {
   end_value: string | null;
   note: string | null;
   schedule_date: string | null;
+  generated_from_plantao: string | null;
   active: boolean;
   created_at: string;
   escala_analysts: RawEscalaLink[] | null;

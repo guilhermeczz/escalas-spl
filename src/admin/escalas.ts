@@ -20,7 +20,82 @@ function describe(escala: EscalaWithAnalysts): string {
   return `<strong>${defined}</strong> de ${escala.analysts.length} horário(s) individual(is) definido(s)`;
 }
 
+const SECTION_META: Record<EscalaKind, { title: string; description: string }> = {
+  almoco: { title: 'Escala de almoço', description: 'Horários individuais da equipe' },
+  plantao: { title: 'Escala de plantão', description: 'Responsáveis e períodos de cobertura' },
+  horario: { title: 'Escala da URA', description: 'Turnos manuais e automáticos consolidados' },
+};
+
+function escalaCard(e: EscalaWithAnalysts): string {
+  return `
+    <article class="escala-row ${e.active ? '' : 'escala-inactive'}">
+      <div class="escala-main">
+        <span class="chip chip-${e.kind}">${KIND_LABEL[e.kind]}</span>
+        <div class="escala-info">
+          <h4>${escapeHtml(e.title)} ${e.active ? '' : '<span class="badge-off">inativa</span>'}</h4>
+          <p>${describe(e)}</p>
+          <div class="escala-analysts">
+            ${e.analysts.map((a) => `<span class="mini-user"><span class="avatar avatar-xs" style="background:${a.color}">${initials(a.name)}</span>${escapeHtml(a.name)}</span>`).join('') || '<span class="muted">Sem analistas vinculados</span>'}
+          </div>
+        </div>
+      </div>
+      <div class="escala-actions">
+        <button class="btn-mini" data-act="toggle" data-id="${e.id}">${e.active ? 'Desativar' : 'Ativar'}</button>
+        <button class="btn-mini" data-act="edit" data-id="${e.id}">Editar</button>
+        <button class="btn-mini btn-mini-danger" data-act="del" data-id="${e.id}">Excluir</button>
+      </div>
+    </article>`;
+}
+
+function automaticUraCards(generated: EscalaWithAnalysts[], all: EscalaWithAnalysts[]): string {
+  const groups = new Map<string, EscalaWithAnalysts[]>();
+  generated.forEach((escala) => {
+    const key = escala.generated_from_plantao ?? 'sem-plantao';
+    groups.set(key, [...(groups.get(key) ?? []), escala]);
+  });
+
+  return Array.from(groups.entries()).map(([plantaoId, items]) => {
+    const plantao = all.find((item) => item.id === plantaoId);
+    const people = new Map(items.flatMap((item) => item.analysts).map((person) => [person.id, person]));
+    const dates = items.map((item) => item.schedule_date).filter((date): date is string => Boolean(date)).sort();
+    const slots = new Set(items.map((item) => `${item.start_value}-${item.end_value}`));
+    const owner = plantao?.analysts.map((person) => person.name).join(', ') || 'Plantão não localizado';
+    const period = dates.length
+      ? `${formatDateBR(dates[0])}${dates.length > 1 ? ` até ${formatDateBR(dates[dates.length - 1])}` : ''}`
+      : 'Período automático';
+    const allActive = items.every((item) => item.active);
+    return `<article class="escala-row escala-auto-summary">
+      <div class="escala-main">
+        <span class="auto-icon" aria-hidden="true">↳</span>
+        <div class="escala-info">
+          <h4>URA automática · ${escapeHtml(owner)}</h4>
+          <p><strong>${period}</strong> · ${slots.size} faixa(s) de horário · ${people.size} participante(s) · ${allActive ? 'cobertura ativa' : 'há horários inativos'}</p>
+          <div class="escala-analysts">${Array.from(people.values()).map((person) => `<span class="mini-user"><span class="avatar avatar-xs" style="background:${person.color}">${initials(person.name)}</span>${escapeHtml(person.name)}</span>`).join('')}</div>
+        </div>
+      </div>
+      <button class="btn-mini" data-open-ura-config>Configurar por plantonista</button>
+    </article>`;
+  }).join('');
+}
+
+function sectionBlock(kind: EscalaKind, content: string, recordCount: number, open: boolean, countLabel?: string): string {
+  const meta = SECTION_META[kind];
+  return `<details class="escala-section-block escala-section-${kind}" data-escala-section="${kind}" ${open ? 'open' : ''}>
+    <summary>
+      <span class="section-arrow" aria-hidden="true">›</span>
+      <span class="section-heading"><strong>${meta.title}</strong><small>${meta.description}</small></span>
+      <span class="section-count">${countLabel ?? `${recordCount} ${recordCount === 1 ? 'registro' : 'registros'}`}</span>
+    </summary>
+    <div class="escala-section-content">
+      <div class="section-toolbar"><span>Visualização simplificada</span><button class="btn-mini" data-new-kind="${kind}">+ Adicionar</button></div>
+      <div class="escala-cards">${content || '<div class="empty-inline">Nenhuma escala deste tipo.</div>'}</div>
+    </div>
+  </details>`;
+}
+
 export async function refreshEscalas(root: HTMLElement) {
+  const previousOpen = new Set(Array.from(root.querySelectorAll<HTMLDetailsElement>('[data-escala-section][open]')).map((item) => item.dataset.escalaSection));
+  const hadSections = Boolean(root.querySelector('[data-escala-section]'));
   root.innerHTML = `<div class="list-loading">Carregando escalas...</div>`;
   try {
     const escalas = (await fetchAllEscalas()).sort((a, b) => {
@@ -29,39 +104,23 @@ export async function refreshEscalas(root: HTMLElement) {
       }
       return a.created_at.localeCompare(b.created_at);
     });
-    if (escalas.length === 0) {
-      root.innerHTML = `<div class="empty-inline">Nenhuma escala criada ainda.</div>`;
-      return;
-    }
-    root.innerHTML = `
-      <div class="escala-cards">
-        ${escalas
-          .map(
-            (e) => `
-              <article class="escala-row ${e.active ? '' : 'escala-inactive'}">
-                <div class="escala-main">
-                  <span class="chip chip-${e.kind}">${KIND_LABEL[e.kind]}</span>
-                  <div class="escala-info">
-                    <h4>${escapeHtml(e.title)} ${e.active ? '' : '<span class="badge-off">inativa</span>'}</h4>
-                    <p>${describe(e)}</p>
-                    <div class="escala-analysts">
-                      ${e.analysts
-                        .map((a) => `<span class="mini-user"><span class="avatar avatar-xs" style="background:${a.color}">${initials(a.name)}</span>${escapeHtml(a.name)}</span>`)
-                        .join('') || '<span class="muted">Sem analistas vinculados</span>'}
-                    </div>
-                  </div>
-                </div>
-                <div class="escala-actions">
-                  <button class="btn-mini" data-act="toggle" data-id="${e.id}">${e.active ? 'Desativar' : 'Ativar'}</button>
-                  <button class="btn-mini" data-act="edit" data-id="${e.id}">Editar</button>
-                  <button class="btn-mini btn-mini-danger" data-act="del" data-id="${e.id}">Excluir</button>
-                </div>
-              </article>
-            `
-          )
-          .join('')}
-      </div>
-    `;
+    const lunches = escalas.filter((item) => item.kind === 'almoco');
+    const plantoes = escalas.filter((item) => item.kind === 'plantao');
+    const manualUra = escalas.filter((item) => item.kind === 'horario' && !item.generated_from_plantao);
+    const generatedUra = escalas.filter((item) => item.kind === 'horario' && item.generated_from_plantao);
+    const uraPrograms = new Set(generatedUra.map((item) => item.generated_from_plantao)).size + manualUra.length;
+    root.innerHTML = `<div class="escala-sections">
+      ${sectionBlock('almoco', lunches.map(escalaCard).join(''), lunches.length, hadSections ? previousOpen.has('almoco') : true)}
+      ${sectionBlock('plantao', plantoes.map(escalaCard).join(''), plantoes.length, previousOpen.has('plantao'))}
+      ${sectionBlock('horario', `${automaticUraCards(generatedUra, escalas)}${manualUra.map(escalaCard).join('')}`, uraPrograms, previousOpen.has('horario'), `${uraPrograms} ${uraPrograms === 1 ? 'programação' : 'programações'}`)}
+    </div>`;
+
+    root.querySelectorAll<HTMLButtonElement>('[data-new-kind]').forEach((button) => {
+      button.addEventListener('click', () => escalaModal(root, undefined, button.dataset.newKind as EscalaKind));
+    });
+    root.querySelectorAll<HTMLButtonElement>('[data-open-ura-config]').forEach((button) => {
+      button.addEventListener('click', () => document.querySelector<HTMLButtonElement>('.admin-tab[data-tab="ura-config"]')?.click());
+    });
 
     root.querySelectorAll<HTMLButtonElement>('[data-act]').forEach((btn) => {
       btn.addEventListener('click', async () => {
@@ -153,8 +212,9 @@ function analystSelector(analysts: Awaited<ReturnType<typeof fetchAnalysts>>, es
   }).join('') || '<p class="muted">Cadastre analistas em "Equipe" antes de criar escalas.</p>';
 }
 
-async function escalaModal(root: HTMLElement, escala?: EscalaWithAnalysts) {
+async function escalaModal(root: HTMLElement, escala?: EscalaWithAnalysts, preferredKind: EscalaKind = 'horario') {
   const isEdit = Boolean(escala);
+  const initialKind = escala?.kind ?? preferredKind;
   const analysts = await fetchAnalysts();
   const selectedIds = new Set((escala?.analysts ?? []).map((a) => a.id));
 
@@ -169,12 +229,12 @@ async function escalaModal(root: HTMLElement, escala?: EscalaWithAnalysts) {
       <div class="field">
         <label for="esKind">Tipo de escala</label>
         <select id="esKind">
-          <option value="horario" ${escala?.kind === 'horario' ? 'selected' : ''}>Horário (Escala URA)</option>
-          <option value="plantao" ${escala?.kind === 'plantao' ? 'selected' : ''}>Data (Plantão)</option>
-          <option value="almoco" ${escala?.kind === 'almoco' ? 'selected' : ''}>Flexível (Almoço)</option>
+          <option value="horario" ${initialKind === 'horario' ? 'selected' : ''}>Horário (Escala URA)</option>
+          <option value="plantao" ${initialKind === 'plantao' ? 'selected' : ''}>Data (Plantão)</option>
+          <option value="almoco" ${initialKind === 'almoco' ? 'selected' : ''}>Flexível (Almoço)</option>
         </select>
       </div>
-      <div id="kindFields">${kindFields(escala?.kind ?? 'horario', escala)}</div>
+      <div id="kindFields">${kindFields(initialKind, escala)}</div>
       <div class="field">
         <div class="field-heading"><label>Analistas da escala</label><span id="selectedCount">${selectedIds.size} selecionado(s)</span></div>
         <div id="analystChecks" class="analyst-schedule-list">

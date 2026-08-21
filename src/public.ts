@@ -1,7 +1,8 @@
 import './style.css';
-import { fetchPublicData } from './data';
+import { fetchPublicData, isArchivedPlantao } from './data';
 import { supabase } from './supabaseClient';
 import { initTheme } from './theme';
+import { initAnalystProfile } from './profile';
 import type { EscalaWithAnalysts, Notice } from './types';
 import {
   formatDateBR,
@@ -132,9 +133,12 @@ function renderTimeSensitiveSections() {
   if (!currentEscalas.length) return;
   const localDate = new Date().toLocaleDateString('sv-SE');
   const ura = currentEscalas.filter((e) => e.kind === 'horario' && (!e.schedule_date || e.schedule_date === localDate));
+  const plantao = sortPlantaoByDate(currentEscalas.filter((e) => e.kind === 'plantao' && !isArchivedPlantao(e)));
   const almoco = currentEscalas.filter((e) => e.kind === 'almoco');
   $('#uraGrid').innerHTML = ura.map(renderUra).join('');
+  $('#plantaoGrid').innerHTML = plantao.map(renderPlantao).join('');
   $('#almocoGrid').innerHTML = renderAlmocoSchedule(almoco);
+  $('#plantaoSection').classList.toggle('hidden', plantao.length === 0);
   renderOperationalCounters();
 }
 
@@ -182,7 +186,7 @@ function renderAlmocoSchedule(escalas: EscalaWithAnalysts[]): string {
           <span class="lunch-order">${defined ? `${index + 1}º` : '!'}</span>
           <div><strong>${defined ? `${formatTime(start)} às ${formatTime(end)}` : 'Horário pendente'}</strong><small>${group.length} analista(s)</small></div>
         </div>
-        <div class="card-grid">
+        <div class="card-grid lunch-slot-cards">
           ${group.map(({ escala, analyst }) => renderAlmoco({ ...escala, analysts: [analyst] })).join('')}
         </div>
       </div>`;
@@ -279,7 +283,7 @@ async function initAnalystSession(): Promise<boolean> {
     location.replace('/login.html');
     return false;
   }
-  const { data: profile } = await supabase.from('profiles').select('name,role,analyst_id,analysts(extension)').eq('id', auth.session.user.id).single();
+  const { data: profile } = await supabase.from('profiles').select('name,email,role,analyst_id,birth_date,avatar_path,theme_mode,color_palette,analysts(extension,role)').eq('id', auth.session.user.id).single();
   if (!profile) {
     await supabase.auth.signOut();
     location.replace('/login.html');
@@ -300,6 +304,17 @@ async function initAnalystSession(): Promise<boolean> {
   $('#analystLogout').classList.remove('hidden');
   $('#improvementPrompt').classList.remove('hidden');
   document.querySelectorAll<HTMLAnchorElement>('a[href="/login.html"]').forEach((link) => link.classList.add('hidden'));
+  await initAnalystProfile({
+    userId: auth.session.user.id,
+    name,
+    email: profile.email ?? auth.session.user.email ?? '',
+    extension: analyst?.extension ?? null,
+    role: analyst?.role ?? null,
+    birthDate: profile.birth_date ?? null,
+    avatarPath: profile.avatar_path ?? null,
+    themeMode: profile.theme_mode === 'dark' ? 'dark' : 'light',
+    colorPalette: ['dark', 'pink', 'green'].includes(profile.color_palette) ? profile.color_palette as 'dark' | 'pink' | 'green' : 'blue',
+  }, toast);
   if (!profile.analyst_id) { $('#myLunchStatus').textContent = 'Perfil sem vínculo'; return true; }
   await Promise.all([refreshMyLunch(), refreshWorkday()]);
   return true;

@@ -1,5 +1,5 @@
 import { supabase } from '../supabaseClient';
-import { fetchAllEscalas, fetchAnalysts } from '../data';
+import { fetchAllEscalas, fetchAnalysts, isArchivedPlantao } from '../data';
 import type { EscalaWithAnalysts, EscalaKind } from '../types';
 import { escapeHtml, initials, formatTime, formatDateBR, KIND_LABEL } from '../utils';
 import { openModal, confirmDialog, toast, errMessage } from './ui';
@@ -104,10 +104,12 @@ export async function refreshEscalas(root: HTMLElement) {
       }
       return a.created_at.localeCompare(b.created_at);
     });
-    const lunches = escalas.filter((item) => item.kind === 'almoco');
-    const plantoes = escalas.filter((item) => item.kind === 'plantao');
-    const manualUra = escalas.filter((item) => item.kind === 'horario' && !item.generated_from_plantao);
-    const generatedUra = escalas.filter((item) => item.kind === 'horario' && item.generated_from_plantao);
+    const archivedPlantaoIds = new Set(escalas.filter((item) => isArchivedPlantao(item)).map((item) => item.id));
+    const visibleEscalas = escalas.filter((item) => !isArchivedPlantao(item) && !archivedPlantaoIds.has(item.generated_from_plantao ?? ''));
+    const lunches = visibleEscalas.filter((item) => item.kind === 'almoco');
+    const plantoes = visibleEscalas.filter((item) => item.kind === 'plantao');
+    const manualUra = visibleEscalas.filter((item) => item.kind === 'horario' && !item.generated_from_plantao);
+    const generatedUra = visibleEscalas.filter((item) => item.kind === 'horario' && item.generated_from_plantao);
     const uraPrograms = new Set(generatedUra.map((item) => item.generated_from_plantao)).size + manualUra.length;
     root.innerHTML = `<div class="escala-sections">
       ${sectionBlock('almoco', lunches.map(escalaCard).join(''), lunches.length, hadSections ? previousOpen.has('almoco') : true)}

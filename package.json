@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.4",
+    "browser-image-compression": "^2.0.2",
     "jspdf": "^4.2.1"
   },
   "devDependencies": {

@@ -28,7 +28,6 @@
             <span id="clockTime">--:--</span>
             <span id="clockDate" class="clock-date">—</span>
           </div>
-          <button id="themeToggle" class="btn-ghost theme-toggle" type="button">🌙 Modo escuro</button>
           <a href="/login.html" class="btn-ghost" title="Entrar no sistema">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <rect x="4" y="11" width="16" height="10" rx="2" />
@@ -36,6 +35,7 @@
             </svg>
             Entrar
           </a>
+          <button id="analystProfileButton" class="profile-avatar-button hidden" type="button" title="Abrir meu perfil" aria-label="Abrir meu perfil"><span id="headerProfileInitials">AN</span><img id="headerProfileImage" class="hidden" alt="" /></button>
           <button id="analystLogout" class="btn-ghost hidden" type="button">Sair</button>
         </div>
       </div>
@@ -132,6 +132,7 @@
     </footer>
 
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <div id="profileModalRoot"></div>
     <div id="improvementModalRoot"></div>
     <aside id="improvementPrompt" class="feedback-prompt hidden no-print" aria-label="Enviar sugestão">
       <div class="feedback-message">Tem uma sugestão? Envie aqui<span aria-hidden="true">↓</span></div>

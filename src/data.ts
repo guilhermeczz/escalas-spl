@@ -40,9 +40,18 @@ function resolveAnalysts(escala: RawEscala): EscalaWithAnalysts {
   return { ...rest, analysts };
 }
 
+/** Data operacional usada para arquivar plantões, independente do fuso do dispositivo. */
+export function operationToday(): string {
+  return new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' });
+}
+
+export function isArchivedPlantao(escala: EscalaWithAnalysts, today = operationToday()): boolean {
+  return escala.kind === 'plantao' && Boolean(escala.end_value) && escala.end_value! < today;
+}
+
 export async function fetchPublicData(): Promise<{ notices: Notice[]; escalas: EscalaWithAnalysts[] }> {
   const [noticesRes, escalasRes, absencesRes] = await Promise.all([
-    supabase.from('notices').select('*').eq('active', true).order('created_at', { ascending: false }),
+    supabase.from('notices').select('*').eq('active', true).order('created_at', { ascending: true }),
     supabase.from('escalas').select(ESCALA_SELECT).eq('active', true).order('created_at', { ascending: true }),
     supabase.rpc('active_absent_analyst_ids'),
   ]);
@@ -52,9 +61,14 @@ export async function fetchPublicData(): Promise<{ notices: Notice[]; escalas: E
   if (absencesRes.error) throw new Error(absencesRes.error.message);
   const absentIds = new Set((absencesRes.data ?? []).map((row: { analyst_id: string }) => row.analyst_id));
 
+  const resolved = ((escalasRes.data ?? []) as unknown as RawEscala[])
+    .map(resolveAnalysts)
+    .map((escala) => ({ ...escala, analysts: escala.analysts.filter((analyst) => !absentIds.has(analyst.id)) }));
+  const archivedPlantaoIds = new Set(resolved.filter((escala) => isArchivedPlantao(escala)).map((escala) => escala.id));
+
   return {
     notices: noticesRes.data ?? [],
-    escalas: ((escalasRes.data ?? []) as unknown as RawEscala[]).map(resolveAnalysts).map((escala) => ({ ...escala, analysts: escala.analysts.filter((analyst) => !absentIds.has(analyst.id)) })),
+    escalas: resolved.filter((escala) => !isArchivedPlantao(escala) && !archivedPlantaoIds.has(escala.generated_from_plantao ?? '')),
   };
 }
 
@@ -74,7 +88,7 @@ export async function fetchAnalysts(): Promise<Analyst[]> {
 }
 
 export async function fetchNotices(): Promise<Notice[]> {
-  const { data, error } = await supabase.from('notices').select('*').order('created_at', { ascending: false });
+  const { data, error } = await supabase.from('notices').select('*').order('created_at', { ascending: true });
   if (error) throw new Error(error.message);
   return data ?? [];
 }

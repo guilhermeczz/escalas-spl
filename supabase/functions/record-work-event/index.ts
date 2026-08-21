@@ -7,16 +7,16 @@ const cors = {
 
 const eventPresentation: Record<string, { title: string; action: string; symbol: string; color: string }> = {
   entry: {
-    title: 'ENTRADA',
-    action: 'entrou no expediente',
+    title: 'INÍCIO DE JORNADA',
+    action: 'iniciou a jornada',
     symbol: '🟢 ➡️',
     color: '#2EB67D',
   },
   lunch: {
     title: 'SAÍDA PARA ALMOÇO',
     action: 'saiu para o almoço',
-    symbol: '🔴 ⬅️',
-    color: '#E01E5A',
+    symbol: '🟠 ⬅️',
+    color: '#F59E0B',
   },
   lunch_return: {
     title: 'RETORNO DO ALMOÇO',
@@ -25,8 +25,8 @@ const eventPresentation: Record<string, { title: string; action: string; symbol:
     color: '#2EB67D',
   },
   shift_end: {
-    title: 'FIM DO EXPEDIENTE',
-    action: 'encerrou o expediente',
+    title: 'SAÍDA · FIM DE JORNADA',
+    action: 'encerrou a jornada',
     symbol: '🔴 ⬅️',
     color: '#E01E5A',
   },

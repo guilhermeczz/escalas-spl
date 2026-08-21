@@ -33,13 +33,16 @@ type BirthdayProfile = {
 Deno.serve(async (req) => {
   try {
     const cronSecret = Deno.env.get('CRON_SECRET');
-    if (!cronSecret || req.headers.get('x-cron-secret') !== cronSecret) return json({ error: 'Acesso negado' }, 401);
+    const testSecret = Deno.env.get('BIRTHDAY_TEST_SECRET');
+    const isCronRequest = Boolean(cronSecret && req.headers.get('x-cron-secret') === cronSecret);
+    const isBirthdayTest = Boolean(testSecret && req.headers.get('x-birthday-test-secret') === testSecret);
+    if (!isCronRequest && !isBirthdayTest) return json({ error: 'Acesso negado' }, 401);
 
     const now = new Date();
     const today = new Intl.DateTimeFormat('sv-SE', { timeZone: 'America/Sao_Paulo' }).format(now);
     const weekday = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Sao_Paulo', weekday: 'short' }).format(now);
     const hour = Number(new Intl.DateTimeFormat('en-US', { timeZone: 'America/Sao_Paulo', hour: '2-digit', hour12: false }).format(now));
-    if (hour !== 8) return json({ configured: true, sent: false, reason: 'operation_off' });
+    if (!isBirthdayTest && hour !== 8) return json({ configured: true, sent: false, reason: 'operation_off' });
 
     const client = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
     const supportWebhook = Deno.env.get('SUPPORT_SLACK_WEBHOOK_URL');
@@ -93,7 +96,7 @@ Deno.serve(async (req) => {
 
     const greetingWebhook = Deno.env.get('SLACK_WEBHOOK_URL');
     let greetingSent = false;
-    if (greetingWebhook && weekday !== 'Sun') {
+    if (!isBirthdayTest && greetingWebhook && weekday !== 'Sun') {
       const dayNumber = Math.floor(Date.parse(`${today}T12:00:00Z`) / 86400000);
       const messageIndex = dayNumber % messages.length;
       const { data: claimed } = await client
@@ -112,7 +115,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    return json({ configured: Boolean(supportWebhook || greetingWebhook), greeting_sent: greetingSent, birthdays_sent: birthdaysSent, date: today });
+    return json({ configured: Boolean(supportWebhook || greetingWebhook), test_mode: isBirthdayTest, greeting_sent: greetingSent, birthdays_sent: birthdaysSent, date: today });
   } catch (error) {
     return json({ error: error instanceof Error ? error.message : 'Erro interno' }, 500);
   }

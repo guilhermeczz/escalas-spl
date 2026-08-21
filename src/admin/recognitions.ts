@@ -46,16 +46,16 @@ export async function refreshRecognitionHistory(root: HTMLElement) {
     return `<article class="recognition-history-row">
       ${analyst ? analystAvatar(analyst, 'avatar-xs') : `<span class="avatar avatar-xs" style="background:#64748b">${initials(name)}</span>`}
       <div><strong>${escapeHtml(name)}</strong><span>${escapeHtml(row.title)}</span><small>${formatDateTime(row.created_at)}${row.media_type ? ` · ${row.media_type.startsWith('audio/') ? 'Áudio' : 'Imagem'}` : ''}</small>${row.slack_error && !row.slack_sent_at ? `<em>${escapeHtml(row.slack_error)}</em>` : ''}</div>
-      <span class="chip chip-${row.slack_sent_at ? 'ok' : 'warn'}">${row.slack_sent_at ? 'Publicado' : 'Pendente'}</span>
-      ${row.slack_sent_at ? '' : `<button class="btn-mini" data-retry-recognition="${row.id}" type="button">Reenviar</button>`}
+      <span class="chip chip-${row.slack_sent_at ? 'ok' : 'warn'}">${row.slack_sent_at ? 'Publicado no Slack' : 'Envio pendente'}</span>
+      ${row.slack_sent_at ? '' : `<button class="btn-mini" data-retry-recognition="${row.id}" type="button">Tentar novamente</button>`}
     </article>`;
-  }).join('') || '<div class="empty-inline">Nenhum reconhecimento publicado ainda.</div>';
+  }).join('') || '<div class="empty-inline">Os reconhecimentos publicados aparecerão aqui.</div>';
 
   history.querySelectorAll<HTMLButtonElement>('[data-retry-recognition]').forEach((button) => button.addEventListener('click', async () => {
     button.disabled = true;
     const { data: result, error: invokeError } = await supabase.functions.invoke('send-recognition', { body: { recognitionId: button.dataset.retryRecognition } });
-    if (invokeError || result?.error) toast(result?.error ?? invokeError?.message ?? 'Não foi possível reenviar.', 'error');
-    else toast('Reconhecimento publicado no Slack.');
+    if (invokeError || result?.error) toast(result?.error ?? invokeError?.message ?? 'Não foi possível concluir o envio. Tente novamente.', 'error');
+    else toast('Reconhecimento publicado no Slack com sucesso.');
     await refreshRecognitionHistory(root);
   }));
 }
@@ -64,15 +64,15 @@ export async function initRecognitions(root: HTMLElement) {
   const analysts = await fetchAnalysts();
   root.innerHTML = `<div class="recognition-layout">
     <form id="recognitionForm" class="recognition-compose">
-      <div class="recognition-intro"><span>★</span><div><strong>Novo reconhecimento</strong><p>O cartão marcará o canal e o analista para que o time possa parabenizá-lo.</p></div></div>
-      <div class="field"><label for="recognitionAnalyst">Analista reconhecido</label><select id="recognitionAnalyst" required><option value="">Selecione...</option>${analysts.map((analyst) => `<option value="${analyst.id}">${escapeHtml(analyst.name)}</option>`).join('')}</select></div>
-      <div class="field"><label for="recognitionTitle">Título do cartão</label><input id="recognitionTitle" maxlength="80" minlength="3" value="Reconhecimento do time" required /></div>
-      <div class="field"><label for="recognitionMessage">Elogio</label><textarea id="recognitionMessage" rows="5" maxlength="1200" minlength="10" placeholder="Conte o que o analista fez e por que merece este reconhecimento..." required></textarea></div>
-      <div class="field"><label>Mídia opcional</label><label id="recognitionDropzone" class="recognition-dropzone" for="recognitionMedia"><input id="recognitionMedia" class="hidden" type="file" accept="image/png,image/jpeg,image/webp,audio/mpeg,audio/mp4,audio/x-m4a,audio/wav,audio/ogg,audio/webm,.png,.jpg,.jpeg,.webp,.mp3,.m4a,.wav,.ogg,.webm" /><span class="dropzone-icon">＋</span><strong>Arraste uma imagem ou áudio</strong><small>ou clique para escolher no Explorer · até 30 MB</small></label><div id="recognitionMediaPreview" class="recognition-media-preview hidden"></div></div>
-      <div class="recognition-publish-note"><strong>Publicação no Slack</strong><span>Imagens aparecem no cartão. Áudios serão publicados com o botão “Ouvir áudio”.</span></div>
-      <button class="btn-primary recognition-submit" type="submit">Publicar reconhecimento</button>
+      <div class="recognition-intro"><span>★</span><div><strong>Criar reconhecimento</strong><p>Transforme um bom trabalho em uma mensagem especial para toda a equipe.</p></div></div>
+      <div class="field"><label for="recognitionAnalyst">Quem você quer reconhecer? *</label><select id="recognitionAnalyst" required><option value="">Selecione um analista</option>${analysts.map((analyst) => `<option value="${analyst.id}">${escapeHtml(analyst.name)}</option>`).join('')}</select></div>
+      <div class="field"><label for="recognitionTitle">Título da homenagem *</label><input id="recognitionTitle" maxlength="80" minlength="3" value="Parabéns pelo excelente trabalho!" required /><small>Uma frase curta que resuma o motivo do reconhecimento.</small></div>
+      <div class="field"><label for="recognitionMessage">Mensagem de reconhecimento *</label><textarea id="recognitionMessage" rows="5" maxlength="1200" minlength="10" placeholder="Conte o que a pessoa fez e por que essa atitude merece ser reconhecida." required></textarea><small>Seja específico: destaque a atitude, o resultado ou o impacto positivo.</small></div>
+      <div class="field"><label>Foto ou áudio <span class="muted">(opcional)</span></label><label id="recognitionDropzone" class="recognition-dropzone" for="recognitionMedia"><input id="recognitionMedia" class="hidden" type="file" accept="image/png,image/jpeg,image/webp,audio/mpeg,audio/mp4,audio/x-m4a,audio/wav,audio/ogg,audio/webm,.png,.jpg,.jpeg,.webp,.mp3,.m4a,.wav,.ogg,.webm" /><span class="dropzone-icon">＋</span><strong>Arraste o arquivo para cá</strong><small>ou clique para selecionar no computador · limite de 30 MB</small></label><div id="recognitionMediaPreview" class="recognition-media-preview hidden"></div></div>
+      <div class="recognition-publish-note"><strong>Pronto para compartilhar?</strong><span>A publicação será enviada ao canal do suporte e notificará o analista e toda a equipe. A foto aparecerá no cartão; o áudio ficará disponível no botão “Ouvir áudio”.</span></div>
+      <button class="btn-primary recognition-submit" type="submit">Publicar no Slack</button>
     </form>
-    <aside class="recognition-history"><div class="recognition-history-head"><div><strong>Histórico</strong><span>Últimos reconhecimentos</span></div></div><div id="recognitionHistory"><div class="list-loading">Carregando...</div></div></aside>
+    <aside class="recognition-history"><div class="recognition-history-head"><div><strong>Publicações recentes</strong><span>Acompanhe os últimos reconhecimentos enviados</span></div></div><div id="recognitionHistory"><div class="list-loading">Buscando publicações...</div></div></aside>
   </div>`;
 
   const form = root.querySelector<HTMLFormElement>('#recognitionForm')!;
@@ -92,8 +92,8 @@ export async function initRecognitions(root: HTMLElement) {
     dropzone.classList.remove('hidden');
   };
   const chooseFile = async (file: File) => {
-    if (![...allowedImages, ...allowedAudio].includes(file.type)) { toast('Use uma imagem PNG/JPEG/WebP ou um áudio MP3/M4A/WAV/OGG/WebM.', 'error'); return; }
-    if (file.size > MAX_MEDIA_SIZE) { toast('O arquivo deve ter no máximo 30 MB.', 'error'); return; }
+    if (![...allowedImages, ...allowedAudio].includes(file.type)) { toast('Formato não aceito. Escolha uma imagem PNG, JPEG ou WebP, ou um áudio MP3, M4A, WAV, OGG ou WebM.', 'error'); return; }
+    if (file.size > MAX_MEDIA_SIZE) { toast('Este arquivo ultrapassa o limite de 30 MB. Escolha um arquivo menor.', 'error'); return; }
     dropzone.classList.add('processing');
     try {
       selectedFile = allowedImages.includes(file.type)
@@ -122,7 +122,7 @@ export async function initRecognitions(root: HTMLElement) {
     event.preventDefault();
     const button = form.querySelector<HTMLButtonElement>('button[type="submit"]')!;
     button.disabled = true;
-    button.textContent = 'Publicando...';
+    button.textContent = 'Publicando no Slack...';
     let mediaPath: string | null = null;
     let postCreated = false;
     try {
@@ -141,10 +141,10 @@ export async function initRecognitions(root: HTMLElement) {
       if (error) throw error;
       postCreated = true;
       const { data: result, error: invokeError } = await supabase.functions.invoke('send-recognition', { body: { recognitionId: post.id } });
-      if (invokeError || result?.error) throw new Error(result?.error ?? invokeError?.message ?? 'Falha ao publicar no Slack.');
-      toast('Reconhecimento publicado e o canal foi marcado.');
+      if (invokeError || result?.error) throw new Error(result?.error ?? invokeError?.message ?? 'Não foi possível publicar no Slack. Tente novamente.');
+      toast('Reconhecimento publicado! O analista e a equipe foram notificados.');
       form.reset();
-      root.querySelector<HTMLInputElement>('#recognitionTitle')!.value = 'Reconhecimento do time';
+      root.querySelector<HTMLInputElement>('#recognitionTitle')!.value = 'Parabéns pelo excelente trabalho!';
       clearFile();
       await refreshRecognitionHistory(root);
     } catch (error) {
@@ -152,7 +152,7 @@ export async function initRecognitions(root: HTMLElement) {
       toast(errMessage(error), 'error');
     } finally {
       button.disabled = false;
-      button.textContent = 'Publicar reconhecimento';
+      button.textContent = 'Publicar no Slack';
     }
   });
 

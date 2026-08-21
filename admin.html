@@ -22,6 +22,7 @@
         <button class="admin-tab" data-tab="mural"><svg viewBox="0 0 24 24"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8Z"/></svg> Comunicados</button>
         <button class="admin-tab" data-tab="users"><svg viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm7 9v-2a5 5 0 0 0-5-5h-4a5 5 0 0 0-5 5v2M19 8v6M16 11h6"/></svg> Usuários</button>
         <button class="admin-tab" data-tab="ura-config"><svg viewBox="0 0 24 24"><path d="M4 13v-2a8 8 0 0 1 16 0v2M4 13h3v7H5a2 2 0 0 1-2-2v-3a2 2 0 0 1 1-2Zm16 0h-3v7h2a2 2 0 0 0 2-2v-3a2 2 0 0 0-1-2Z"/></svg> Configuração URA</button>
+        <button class="admin-tab" data-tab="recognitions"><svg viewBox="0 0 24 24"><path d="m12 3 2.2 4.5 5 .7-3.6 3.5.9 5-4.5-2.3-4.5 2.3.9-5-3.6-3.5 5-.7L12 3Z"/><path d="M8.5 16.5 7 22l5-2 5 2-1.5-5.5"/></svg> Reconhecimentos</button>
         <button class="admin-tab" data-tab="reports"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg> Relatórios</button>
         <button class="admin-tab" data-tab="improvements"><svg viewBox="0 0 24 24"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8Z"/></svg> Melhorias do time</button>
         <div class="sidebar-separator"></div>
@@ -80,6 +81,10 @@
         <section id="view-ura-config" class="admin-view hidden">
           <div class="admin-view-head"><div><h2>URA por plantonista</h2><p class="toolbar-sub">Defina os horários aplicados automaticamente quando cada plantonista for escalado</p></div></div>
           <div id="uraConfig" class="admin-list"></div>
+        </section>
+        <section id="view-recognitions" class="admin-view hidden">
+          <div class="admin-view-head"><div><h2>Reconhecimentos</h2><p class="toolbar-sub">Publique elogios e conquistas no canal do suporte</p></div></div>
+          <div id="recognitionsRoot" class="recognition-root"></div>
         </section>
         <section id="view-reports" class="admin-view hidden">
           <div class="admin-view-head"><div><h2>Relatórios operacionais</h2><p class="toolbar-sub">Almoços, retornos e escalas por analista e período</p></div></div>

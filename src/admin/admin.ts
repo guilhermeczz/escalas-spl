@@ -11,6 +11,7 @@ import { initUsers, refreshUsers } from './users';
 import { initUraConfig } from './uraConfig';
 import { initReports } from './reports';
 import { initImprovements, refreshImprovements } from './improvements';
+import { initRecognitions, refreshRecognitionHistory } from './recognitions';
 import type { EscalaWithAnalysts } from '../types';
 
 const $ = <T extends HTMLElement>(sel: string): T => {
@@ -104,12 +105,13 @@ function initNav() {
     mural: $('#view-mural'),
     users: $('#view-users'),
     'ura-config': $('#view-ura-config'),
+    recognitions: $('#view-recognitions'),
     reports: $('#view-reports'),
     improvements: $('#view-improvements'),
   };
   const titles: Record<string, string> = {
     dashboard: 'Visão geral', team: 'Equipe', escalas: 'Escalas', mural: 'Comunicados', users: 'Usuários',
-    'ura-config': 'Configuração URA', reports: 'Relatórios', improvements: 'Melhorias do time',
+    'ura-config': 'Configuração URA', recognitions: 'Reconhecimentos', reports: 'Relatórios', improvements: 'Melhorias do time',
   };
 
   tabs.forEach((tab) => {
@@ -183,6 +185,7 @@ function initRealtimeUpdates() {
       if (tables.has('notices')) jobs.push(refreshMural($('#muralList')));
       if (tables.has('profiles')) jobs.push(refreshUsers($('#userList')));
       if (tables.has('improvement_requests')) jobs.push(refreshImprovements($('#improvementList')));
+      if (tables.has('recognition_posts')) jobs.push(refreshRecognitionHistory($('#recognitionsRoot')));
       await Promise.all(jobs);
     }, 250);
   };
@@ -193,6 +196,7 @@ function initRealtimeUpdates() {
     .on('postgres_changes', { event: '*', schema: 'public', table: 'analysts' }, receiveChange)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'notices' }, receiveChange)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'improvement_requests' }, receiveChange)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'recognition_posts' }, receiveChange)
     .subscribe();
 }
 
@@ -217,6 +221,7 @@ async function boot() {
     initUraConfig($('#uraConfig')),
     initReports($('#reportsRoot')),
     initImprovements($('#improvementList')),
+    initRecognitions($('#recognitionsRoot')),
   ]);
   initDashboardActions();
   initRealtimeUpdates();
